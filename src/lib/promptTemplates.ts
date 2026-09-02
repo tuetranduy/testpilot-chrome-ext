@@ -1,4 +1,4 @@
-import type { ElementSummary, TestCaseFormat } from './types'
+import type { ElementSummary, ScanResult, TestCaseFormat } from './types'
 
 function summarizeElements(elements: ElementSummary[]) {
     // Only send fields the model needs; keeps prompts small and avoids leaking page text unnecessarily.
@@ -34,14 +34,30 @@ const TEST_CASE_SCHEMA = `type TestCase = {
 }
 type Response = TestCase[]`
 
-export function buildTestCasePrompt(elements: ElementSummary[], requirementsText: string, format: TestCaseFormat) {
-    const system = `You are a senior QA engineer writing manual test cases from a scanned web page's UI elements and optional requirements/acceptance criteria. Respond ONLY with strict JSON matching this TypeScript type — no markdown fences, no commentary:\n\n${TEST_CASE_SCHEMA}`
+function summarizeFigmaNodes(scan: Extract<ScanResult, { source: 'figma' }>) {
+    return JSON.stringify(scan.nodes.filter((node) => node.visible), null, 2)
+}
+
+export function buildTestCasePrompt(
+    scan: ScanResult,
+    requirementsText: string,
+    format: TestCaseFormat,
+    requestedCount: number,
+    excludedTitles: string[] = [],
+) {
+    const sourceDescription = scan.source === 'figma' ? 'an imported Figma design' : 'a scanned live web page'
+    const system = `You are a senior QA engineer writing manual test cases from ${sourceDescription} and optional requirements/acceptance criteria. Respond ONLY with strict JSON matching this TypeScript type — no markdown fences, no commentary:\n\n${TEST_CASE_SCHEMA}`
     const formatNote =
         format === 'gherkin'
             ? 'Populate "gherkin" with a full Given/When/Then scenario for each case; "steps" and "expectedResult" may be brief summaries.'
             : 'Populate "steps" as short imperative steps and "expectedResult" as one sentence; leave "gherkin" null.'
-    const user = `Page elements (JSON):\n${summarizeElements(elements)}\n\nRequirements / Acceptance Criteria:\n${requirementsText.trim() || '(none provided — infer sensible test cases from the UI alone)'
-        }\n\nGenerate between 4 and 10 test cases covering the happy path, validation errors, and edge cases. ${formatNote}`
+    const sourceLabel = scan.source === 'figma' ? 'Figma design nodes' : 'Web page elements'
+    const sourceJson = scan.source === 'figma' ? summarizeFigmaNodes(scan) : summarizeElements(scan.elements)
+    const exclusions = excludedTitles.length > 0
+        ? `\n\nDo not repeat these previously generated test-case titles or equivalent scenarios:\n${excludedTitles.map((title) => `- ${title}`).join('\n')}`
+        : ''
+    const user = `${sourceLabel} (JSON):\n${sourceJson}\n\nRequirements / Acceptance Criteria:\n${requirementsText.trim() || '(none provided — infer sensible test cases from the UI alone)'
+        }${exclusions}\n\nGenerate exactly ${requestedCount} unique test cases covering the happy path, validation errors, and edge cases. ${formatNote}`
     return { system, user }
 }
 

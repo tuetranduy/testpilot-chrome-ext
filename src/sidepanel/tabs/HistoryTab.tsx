@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { deleteSiteRecord, listSiteRecords } from '../../lib/storage'
-import type { SiteRecord } from '../../lib/types'
+import { deleteRunRecord, listRunRecords, runKey } from '../../lib/storage'
+import type { RunRecord } from '../../lib/types'
 import { Badge, Button, Card, EmptyState, Icon, InlineMessage, SectionTitle, Spinner } from '../components/ui'
 
 export function HistoryTab() {
-  const [records, setRecords] = useState<SiteRecord[] | null>(null)
+  const [records, setRecords] = useState<RunRecord[] | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -12,7 +12,7 @@ export function HistoryTab() {
   async function load() {
     setError(null)
     try {
-      setRecords(await listSiteRecords())
+      setRecords(await listRunRecords())
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Could not load saved runs.')
       setRecords([])
@@ -21,7 +21,7 @@ export function HistoryTab() {
 
   useEffect(() => {
     let cancelled = false
-    void listSiteRecords().then((next) => {
+    void listRunRecords().then((next) => {
       if (!cancelled) setRecords(next)
     }).catch((loadError) => {
       if (!cancelled) {
@@ -34,13 +34,13 @@ export function HistoryTab() {
     }
   }, [])
 
-  async function handleDelete(record: SiteRecord) {
-    if (!window.confirm(`Delete the saved run for ${record.origin}${record.pathname}?`)) return
-    const key = `${record.origin}${record.pathname}`
+  async function handleDelete(record: RunRecord) {
+    if (!window.confirm(`Delete the saved run for ${record.locator.label}?`)) return
+    const key = runKey(record.locator)
     setDeleting(key)
     setError(null)
     try {
-      await deleteSiteRecord(record.origin, record.pathname)
+      await deleteRunRecord(record.locator)
       await load()
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'Could not delete this saved run.')
@@ -53,7 +53,7 @@ export function HistoryTab() {
     <div className="flex flex-col gap-3.5">
       <div className="px-1">
         <SectionTitle icon="history">Saved runs</SectionTitle>
-        <p className="mt-1 text-xs leading-5 text-muted">Review test cases saved locally for each page.</p>
+        <p className="mt-1 text-xs leading-5 text-muted">Review test cases saved locally for web pages and Figma designs.</p>
       </div>
       {error ? (
         <InlineMessage tone="error">
@@ -68,16 +68,19 @@ export function HistoryTab() {
         <EmptyState icon="history" title="No saved runs" description="Scanned pages and generated test cases will appear here." />
       ) : (
         records.map((record, index) => {
-          const key = `${record.origin}${record.pathname}`
+          const key = runKey(record.locator)
           const panelId = `history-test-cases-${index}`
           return (
             <Card key={key}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-text">{record.origin}</p>
-                  <p className="mt-0.5 truncate font-mono text-[10px] text-muted">{record.pathname || '/'}</p>
+                  <p className="truncate text-[13px] font-semibold text-text">{record.locator.label}</p>
+                  <p className="mt-0.5 truncate font-mono text-[10px] text-muted">{record.locator.url}</p>
                 </div>
-                <Badge>{record.testCases.length} test cases</Badge>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <Badge>{record.locator.source === 'figma' ? 'Figma design' : 'Web page'}</Badge>
+                  <span className="text-[10px] text-subtle">{record.testCases.length} test cases</span>
+                </div>
               </div>
               <p className="mt-2 text-[11px] text-subtle">Updated <time dateTime={new Date(record.updatedAt).toISOString()}>{new Date(record.updatedAt).toLocaleString()}</time></p>
               <div className="mt-3 grid grid-cols-[1fr_auto] gap-2 border-t border-border pt-3">

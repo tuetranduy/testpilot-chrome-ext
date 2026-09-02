@@ -17,13 +17,62 @@ export interface ElementSummary {
     visible: boolean
 }
 
-export interface ScanResult {
+export interface WebScanResult {
+    source: 'web'
     url: string
     title: string
     scannedAt: number
     elements: ElementSummary[]
     screenshotDataUrl: string | null
 }
+
+export interface FigmaNodeSummary {
+    id: string
+    name: string
+    type: string
+    text: string | null
+    visible: boolean
+    componentId: string | null
+    interactionTriggers: string[]
+    layoutMode: string | null
+    width: number | null
+    height: number | null
+}
+
+export interface FigmaScanResult {
+    source: 'figma'
+    url: string
+    title: string
+    scannedAt: number
+    fileKey: string
+    pageId: string
+    pageName: string
+    nodeId: string
+    nodeName: string
+    nodes: FigmaNodeSummary[]
+    screenshotDataUrl: string | null
+    previewWarning: string | null
+}
+
+export type ScanResult = WebScanResult | FigmaScanResult
+
+export interface WebRunLocator {
+    source: 'web'
+    origin: string
+    pathname: string
+    url: string
+    label: string
+}
+
+export interface FigmaRunLocator {
+    source: 'figma'
+    fileKey: string
+    nodeId: string
+    url: string
+    label: string
+}
+
+export type RunLocator = WebRunLocator | FigmaRunLocator
 
 export type TestCaseFormat = 'plain' | 'gherkin'
 
@@ -49,17 +98,22 @@ export interface ProviderConfig {
 export interface Settings {
     activeProvider: ProviderId
     providers: Record<ProviderId, ProviderConfig>
+    figma: {
+        personalAccessToken: string
+    }
 }
 
-export interface SiteRecord {
-    origin: string
-    pathname: string
+export interface RunRecord {
+    locator: RunLocator
     updatedAt: number
     lastScan: ScanResult | null
     requirementsText: string
     testCases: TestCase[]
     fieldValues: Record<string, string> // elementId -> generated value, last fill run
 }
+
+/** @deprecated Use RunRecord. Retained as a source-compatible alias during migration. */
+export type SiteRecord = RunRecord
 
 export const DEFAULT_SETTINGS: Settings = {
     activeProvider: 'openai',
@@ -70,4 +124,5 @@ export const DEFAULT_SETTINGS: Settings = {
         anthropic: { apiKey: '', model: 'claude-3-5-sonnet-latest', baseUrl: '' },
         local: { apiKey: '', model: 'llama3', baseUrl: 'http://localhost:11434/v1' },
     },
+    figma: { personalAccessToken: '' },
 }

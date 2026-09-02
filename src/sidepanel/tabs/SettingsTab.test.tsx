@@ -17,6 +17,7 @@ describe('SettingsTab', () => {
     expect(screen.getByLabelText('OpenAI API key')).toBeTruthy()
     expect(screen.getByLabelText('OpenAI model')).toBeTruthy()
     expect(screen.getByLabelText('Local LLM base URL')).toBeTruthy()
+    expect(screen.getByLabelText('Figma personal access token')).toBeTruthy()
   })
 
   it('announces save failures without announcing a false success', async () => {

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { hasOriginAccess, originPatternFor } from '../lib/permissions'
-import { emptySiteRecord, getSettings, getSiteRecord, saveSettings, saveSiteRecord } from '../lib/storage'
+import { emptyRunRecord, getRunRecord, getSettings, saveRunRecord, saveSettings } from '../lib/storage'
 import { getActiveTab } from '../lib/tabActions'
-import type { Settings, SiteRecord } from '../lib/types'
+import type { RunLocator, RunRecord, Settings } from '../lib/types'
 import { Badge, BrandMark, Button, Icon, InlineMessage, type IconName } from './components/ui'
 import { FillDataTab } from './tabs/FillDataTab'
 import { HistoryTab } from './tabs/HistoryTab'
@@ -23,22 +23,11 @@ export default function App() {
   const [tab, setTab] = useState<chrome.tabs.Tab | null>(null)
   const [granted, setGranted] = useState<boolean | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
-  const [siteRecord, setSiteRecord] = useState<SiteRecord | null>(null)
+  const [siteRecord, setSiteRecord] = useState<RunRecord | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [persistenceError, setPersistenceError] = useState<string | null>(null)
   const [loadAttempt, setLoadAttempt] = useState(0)
-  const pendingRecordRef = useRef<SiteRecord | null>(null)
-  const tabUrl = tab?.url
-
-  const originPathKey = useMemo(() => {
-    if (!tabUrl) return null
-    try {
-      const u = new URL(tabUrl)
-      return { origin: u.origin, pathname: u.pathname }
-    } catch {
-      return null
-    }
-  }, [tabUrl])
+  const pendingRecordRef = useRef<RunRecord | null>(null)
 
   useEffect(() => {
     getSettings()
@@ -52,7 +41,13 @@ export default function App() {
       .then(async (t) => {
         if (cancelled) return
         setTab(t)
-        if (t.url) setGranted(await hasOriginAccess(originPatternFor(t.url)))
+        if (t.url) {
+          const url = new URL(t.url)
+          setGranted(await hasOriginAccess(originPatternFor(t.url)))
+          const locator: RunLocator = { source: 'web', origin: url.origin, pathname: url.pathname, url: url.toString(), label: t.title?.trim() || `${url.hostname}${url.pathname}` }
+          const record = await getRunRecord(locator)
+          if (!cancelled) setSiteRecord(record ?? emptyRunRecord(locator))
+        }
       })
       .catch((e) => {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Could not read the active tab.')
@@ -62,25 +57,9 @@ export default function App() {
     }
   }, [loadAttempt])
 
-  useEffect(() => {
-    if (!originPathKey) return
-    let cancelled = false
-    getSiteRecord(originPathKey.origin, originPathKey.pathname)
-      .then((record) => {
-        if (cancelled) return
-        setSiteRecord(record ?? emptySiteRecord(originPathKey.origin, originPathKey.pathname))
-      })
-      .catch((error) => {
-        if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load saved page data.')
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [originPathKey, loadAttempt])
-
-  async function saveRecord(record: SiteRecord) {
+  async function saveRecord(record: RunRecord) {
     try {
-      await saveSiteRecord(record)
+      await saveRunRecord(record)
       if (pendingRecordRef.current === record) setPersistenceError(null)
     } catch (error) {
       if (pendingRecordRef.current === record) {
@@ -89,11 +68,20 @@ export default function App() {
     }
   }
 
-  function persist(next: SiteRecord) {
+  function persist(next: RunRecord) {
     const record = { ...next, updatedAt: Date.now() }
     setSiteRecord(next)
     pendingRecordRef.current = record
     void saveRecord(record)
+  }
+
+  async function selectRun(locator: RunLocator) {
+    try {
+      const record = await getRunRecord(locator)
+      setSiteRecord(record ?? emptyRunRecord(locator))
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Could not load the selected run.')
+    }
   }
 
   function retrySave() {
@@ -134,10 +122,10 @@ export default function App() {
           <div className="mt-3 flex min-w-0 items-center gap-2 rounded-xl border border-border bg-surface/75 p-2.5 text-xs text-muted shadow-input">
             <Icon name="globe" className="h-4 w-4 shrink-0 text-subtle" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-medium text-text">{new URL(tab.url).hostname}</p>
-              <p className="truncate text-[10px] text-subtle">{originPathKey?.pathname || '/'}</p>
+              <p className="truncate text-[12px] font-medium text-text">{siteRecord?.locator.label ?? new URL(tab.url).hostname}</p>
+              <p className="truncate text-[10px] text-subtle">{siteRecord?.locator.source === 'figma' ? 'Figma design' : new URL(tab.url).pathname || '/'}</p>
             </div>
-            <Badge tone={granted ? 'success' : 'muted'}>{granted ? 'Access granted' : 'No access yet'}</Badge>
+            <Badge tone={siteRecord?.locator.source === 'figma' || granted ? 'success' : 'muted'}>{siteRecord?.locator.source === 'figma' ? 'Figma' : granted ? 'Access granted' : 'No access yet'}</Badge>
           </div>
         ) : (
           <p className="mt-3 rounded-xl border border-border bg-surface p-2.5 text-xs text-muted" role="status">{loadError ?? 'Loading active tab…'}</p>
@@ -197,7 +185,7 @@ export default function App() {
                 </InlineMessage>
               </div>
             )}
-            <ScanTab tab={tab} granted={granted} setGranted={setGranted} settings={settings} siteRecord={siteRecord} onUpdate={persist} />
+            <ScanTab key={siteRecord.locator.source} tab={tab} granted={granted} setGranted={setGranted} settings={settings} siteRecord={siteRecord} onUpdate={persist} onSelectRun={selectRun} />
           </>
         ) : activeTabId === 'fill' ? (
           <>

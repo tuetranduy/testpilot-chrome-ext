@@ -10,12 +10,12 @@ if (!previewGlobal.chrome?.tabs?.query || !previewGlobal.chrome?.storage?.local)
   const siteKey = 'site:https://example.com/checkout'
   const store: Record<string, unknown> = {
     [siteKey]: {
-      origin: 'https://example.com',
-      pathname: '/checkout',
+      locator: { source: 'web', origin: 'https://example.com', pathname: '/checkout', url: 'https://example.com/checkout', label: 'Checkout' },
       updatedAt: Date.now(),
       requirementsText: 'Customers can complete checkout with valid shipping and payment details.',
       fieldValues: { email: 'alex@example.com', country: 'Vietnam' },
       lastScan: {
+        source: 'web',
         url: 'https://example.com/checkout',
         title: 'Checkout',
         scannedAt: Date.now(),

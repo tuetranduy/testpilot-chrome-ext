@@ -4,7 +4,7 @@
 import { scanPage } from '../content/scan'
 import { fillFields, type FillInstruction } from '../content/fill'
 import { hasOriginAccess, originPatternFor, requestOriginAccess } from './permissions'
-import type { ScanResult } from './types'
+import type { ScanResult, WebScanResult } from './types'
 
 export async function getActiveTab(): Promise<chrome.tabs.Tab> {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -24,7 +24,7 @@ export async function scanActiveTab(tab: chrome.tabs.Tab): Promise<ScanResult> {
         target: { tabId: tab.id! },
         func: scanPage,
     })
-    const elements = (injection?.result ?? []) as ScanResult['elements']
+    const elements = (injection?.result ?? []) as WebScanResult['elements']
 
     let screenshotDataUrl: string | null = null
     try {
@@ -35,6 +35,7 @@ export async function scanActiveTab(tab: chrome.tabs.Tab): Promise<ScanResult> {
     }
 
     return {
+        source: 'web',
         url: tab.url!,
         title: tab.title ?? tab.url!,
         scannedAt: Date.now(),
