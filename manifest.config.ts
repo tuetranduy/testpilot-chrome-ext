@@ -11,7 +11,7 @@ export default defineManifest({
     name: 'TestPilot',
     version: pkg.version,
     description:
-        'Scan any page, generate AI-assisted manual test cases from requirements, and fill forms with AI-generated test data.',
+        'Scan web pages and Figma designs, generate configurable AI-assisted manual test cases, and fill forms with realistic test data.',
     icons: {
         16: 'icons/icon-16.png',
         32: 'icons/icon-32.png',
@@ -34,8 +34,8 @@ export default defineManifest({
         default_path: 'src/sidepanel/index.html',
     },
     permissions: ['storage', 'sidePanel', 'scripting', 'activeTab', 'tabs'],
-    // Per-origin access is requested at runtime (chrome.permissions.request)
-    // the first time the user scans a given site, rather than granted upfront.
+    // Exact web, Figma API, preview, and provider origins are requested at
+    // runtime rather than granted upfront.
     optional_host_permissions: ['*://*/*'],
     ...(e2eOrigins ? { host_permissions: e2eOrigins } : {}),
     // The side panel page is normally only servable via the native side panel

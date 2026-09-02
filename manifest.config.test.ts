@@ -32,6 +32,11 @@ function readPngCornerAlpha(path: string) {
 }
 
 describe('extension icon assets', () => {
+  it('describes Figma scanning and configurable generation', () => {
+    expect(manifest.description).toMatch(/Figma/i)
+    expect(manifest.description).toMatch(/configurable/i)
+  })
+
   it('declares square PNG icons at every Chrome extension size', () => {
     for (const size of iconSizes) {
       const path = `icons/icon-${size}.png`

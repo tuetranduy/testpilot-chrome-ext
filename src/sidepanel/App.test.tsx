@@ -4,21 +4,20 @@ import { DEFAULT_SETTINGS } from '../lib/types'
 import App from './App'
 
 const appMocks = vi.hoisted(() => ({
-  emptySiteRecord: vi.fn().mockReturnValue({
-    origin: 'https://example.com',
-    pathname: '/checkout',
+  emptyRunRecord: vi.fn().mockImplementation((locator) => ({
+    locator,
     updatedAt: 0,
     lastScan: null,
     requirementsText: '',
     testCases: [],
     fieldValues: {},
-  }),
+  })),
   getSettings: vi.fn(),
-  getSiteRecord: vi.fn(),
+  getRunRecord: vi.fn(),
   saveSettings: vi.fn(),
-  saveSiteRecord: vi.fn(),
-  listSiteRecords: vi.fn(),
-  deleteSiteRecord: vi.fn(),
+  saveRunRecord: vi.fn(),
+  listRunRecords: vi.fn(),
+  deleteRunRecord: vi.fn(),
   getActiveTab: vi.fn(),
 }))
 
@@ -33,13 +32,13 @@ vi.mock('../lib/permissions', () => ({
 }))
 
 vi.mock('../lib/storage', () => ({
-  emptySiteRecord: appMocks.emptySiteRecord,
+  emptyRunRecord: appMocks.emptyRunRecord,
   getSettings: appMocks.getSettings,
-  getSiteRecord: appMocks.getSiteRecord,
+  getRunRecord: appMocks.getRunRecord,
   saveSettings: appMocks.saveSettings,
-  saveSiteRecord: appMocks.saveSiteRecord,
-  listSiteRecords: appMocks.listSiteRecords,
-  deleteSiteRecord: appMocks.deleteSiteRecord,
+  saveRunRecord: appMocks.saveRunRecord,
+  listRunRecords: appMocks.listRunRecords,
+  deleteRunRecord: appMocks.deleteRunRecord,
 }))
 
 describe('side panel navigation', () => {
@@ -51,11 +50,11 @@ describe('side panel navigation', () => {
       title: 'Checkout',
     })
     appMocks.getSettings.mockResolvedValue(DEFAULT_SETTINGS)
-    appMocks.getSiteRecord.mockResolvedValue(null)
+    appMocks.getRunRecord.mockResolvedValue(null)
     appMocks.saveSettings.mockResolvedValue(undefined)
-    appMocks.saveSiteRecord.mockResolvedValue(undefined)
-    appMocks.listSiteRecords.mockResolvedValue([])
-    appMocks.deleteSiteRecord.mockResolvedValue(undefined)
+    appMocks.saveRunRecord.mockResolvedValue(undefined)
+    appMocks.listRunRecords.mockResolvedValue([])
+    appMocks.deleteRunRecord.mockResolvedValue(undefined)
   })
 
   it('shows the TestPilot brand mark in the header', async () => {
@@ -113,17 +112,17 @@ describe('side panel navigation', () => {
   })
 
   it('retries the latest site change and clears a transient save error', async () => {
-    appMocks.saveSiteRecord.mockRejectedValueOnce(new Error('Quota exceeded'))
+    appMocks.saveRunRecord.mockRejectedValueOnce(new Error('Quota exceeded'))
     render(<App />)
 
     const requirements = await screen.findByLabelText(/add acceptance criteria/i)
     fireEvent.change(requirements, { target: { value: 'Checkout is required' } })
     expect((await screen.findByRole('alert')).textContent).toContain('Quota exceeded')
 
-    appMocks.saveSiteRecord.mockResolvedValueOnce(undefined)
+    appMocks.saveRunRecord.mockResolvedValueOnce(undefined)
     fireEvent.click(screen.getByRole('button', { name: /retry save/i }))
 
     await waitFor(() => expect(screen.queryByText(/quota exceeded/i)).toBeNull())
-    expect(appMocks.saveSiteRecord).toHaveBeenCalledTimes(2)
+    expect(appMocks.saveRunRecord).toHaveBeenCalledTimes(2)
   })
 })

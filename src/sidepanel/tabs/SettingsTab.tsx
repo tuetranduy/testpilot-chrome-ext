@@ -177,6 +177,25 @@ export function SettingsTab({ settings, onSave }: Props) {
         </Card>
       ))}
 
+      <Card>
+        <SectionTitle icon="file">Figma connection</SectionTitle>
+        <p className="mt-1.5 text-xs leading-5 text-muted">Import Figma Design pages and frames with a personal token that has the <span className="font-mono text-text">file_content:read</span> scope.</p>
+        <label className="mt-3 flex flex-col gap-1.5 text-[11px] font-semibold text-muted">
+          Figma personal access token
+          <input
+            type="password"
+            autoComplete="off"
+            placeholder="Figma personal access token"
+            value={draft.figma.personalAccessToken}
+            onChange={(event) => setDraft((current) => ({ ...current, figma: { personalAccessToken: event.target.value } }))}
+            className={fieldClassName}
+          />
+        </label>
+        <InlineMessage>
+          Personal tokens expire after at most 90 days. Generate a replacement in Figma settings if imports begin returning an access error.
+        </InlineMessage>
+      </Card>
+
       <Button onClick={handleSave} disabled={saving} className="w-full">
         {saving ? <><Spinner /> Saving settings…</> : <><Icon name="check" /> Save settings</>}
       </Button>

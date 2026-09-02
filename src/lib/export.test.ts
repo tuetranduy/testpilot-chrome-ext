@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toCsv, toMarkdown } from './export'
+import { featureFilename, toCsv, toFeature, toMarkdown } from './export'
 import type { TestCase } from './types'
 
 const sample: TestCase[] = [
@@ -37,5 +37,25 @@ describe('toCsv', () => {
         const lines = csv.split('\n')
         expect(lines[0]).toBe('ID,Title,Priority,Steps,Expected Result,Gherkin')
         expect(lines[2]).toContain('"Shows ""error, please retry"""')
+    })
+})
+
+describe('toFeature', () => {
+    it('combines scenarios and removes duplicate model-supplied headings', () => {
+        const feature = toFeature([
+            { ...sample[1], title: 'Login succeeds', gherkin: '```gherkin\nFeature: Old\nScenario: Old scenario\nGiven a login form\nWhen valid details are submitted\nThen the dashboard opens\n```' },
+        ], 'Customer Login')
+
+        expect(feature).toBe('Feature: Customer Login\n\n  Scenario: Login succeeds\n    Given a login form\n    When valid details are submitted\n    Then the dashboard opens\n')
+    })
+
+    it('creates a safe kebab-case feature filename', () => {
+        expect(featureFilename('Checkout / Payment: Desktop')).toBe('checkout-payment-desktop.feature')
+    })
+
+    it('requires Gherkin for every case and keeps scenario headings on one line', () => {
+        expect(() => toFeature(sample, 'Login')).toThrow(/Gherkin/i)
+        expect(toFeature([{ ...sample[1], title: 'Login\nwith valid details', gherkin: 'Scenario : old\nGiven a page' }], 'Login'))
+            .toContain('Scenario: Login with valid details\n    Given a page')
     })
 })

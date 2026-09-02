@@ -9,7 +9,7 @@ import { scanPage } from '../content/scan'
 import { parseJsonResponse } from '../lib/aiJson'
 import { buildTestCasePrompt, buildTestDataPrompt } from '../lib/promptTemplates'
 import { chatWithProvider } from '../lib/providers'
-import type { ElementSummary, ProviderConfig, TestCase } from '../lib/types'
+import type { ElementSummary, ProviderConfig, TestCase, WebScanResult } from '../lib/types'
 
 const TARGET_URL = 'https://www.raynatours.com/'
 const LOCAL_CONFIG: ProviderConfig = { apiKey: '', model: 'openai/gpt-oss-20b', baseUrl: 'http://127.0.0.1:1234' }
@@ -44,10 +44,19 @@ describe('real scenario: raynatours.com + local LM Studio (openai/gpt-oss-20b)',
     })
 
     it('generates manual test cases via the real local LLM', async () => {
+        const scan: WebScanResult = {
+            source: 'web',
+            url: TARGET_URL,
+            title: 'Rayna Tours',
+            scannedAt: Date.now(),
+            screenshotDataUrl: null,
+            elements: promptElements(elements),
+        }
         const { system, user } = buildTestCasePrompt(
-            promptElements(elements),
+            scan,
             'User can search for a tour or activity by destination and view results.',
             'plain',
+            10,
         )
         const text = await chatWithProvider('local', LOCAL_CONFIG, [
             { role: 'system', content: system },
