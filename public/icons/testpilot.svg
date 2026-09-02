@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <title>TestPilot icon</title>
+  <defs>
+    <linearGradient id="testpilot-bg" x1="22" y1="14" x2="106" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#182841"/>
+      <stop offset="1" stop-color="#09111F"/>
+    </linearGradient>
+    <linearGradient id="testpilot-accent" x1="27" y1="27" x2="101" y2="101" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#70E5AA"/>
+      <stop offset="1" stop-color="#36BD78"/>
+    </linearGradient>
+  </defs>
+  <rect x="5" y="5" width="118" height="118" rx="29" fill="url(#testpilot-bg)"/>
+  <rect x="6" y="6" width="116" height="116" rx="28" stroke="#30425F" stroke-width="2"/>
+  <path d="M43 28H31C29.3431 28 28 29.3431 28 31V43M85 28H97C98.6569 28 100 29.3431 100 31V43M28 85V97C28 98.6569 29.3431 100 31 100H43M100 85V97C100 98.6569 98.6569 100 97 100H85" stroke="url(#testpilot-accent)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M42 66L57 81L88 48" stroke="#F4F7FB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
