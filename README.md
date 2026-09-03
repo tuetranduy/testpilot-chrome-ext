@@ -4,10 +4,21 @@ AI-assisted Chrome extension for manual QA. Scan a live web page or a Figma
 Design, add requirements, generate an exact number of reviewable test cases,
 and fill selected form fields with realistic test data.
 
+## Install the latest release
+
+1. [Download the latest TestPilot release](https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip).
+2. Extract the ZIP to a permanent folder on your computer.
+3. Open `chrome://extensions`, enable **Developer mode**, click **Load
+   unpacked**, and select the extracted folder.
+4. Open TestPilot's side panel and configure an AI provider in **Settings**.
+
+See the [latest release notes](https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest) for changes and known issues. The release is packaged for end users; source checkout and build instructions remain below for contributors.
+
 ## Features
 
-- **Web and Figma scanning** — keep the existing live-page DOM and screenshot
-  scan, or import a page, frame, section, or component from a Figma Design.
+- **Web, image, and Figma scanning** — keep the existing live-page DOM and
+  screenshot scan, upload up to five related UI images, or import a page,
+  frame, section, or component from a Figma Design.
 - **Configurable generation** — request exactly 5, 10, 15, or 20 cases, or
   choose a custom count from 1 through 50. Output can use plain steps or
   Gherkin.
@@ -32,10 +43,23 @@ exact host access at runtime instead of requesting broad access upfront.
 3. Grant access to that page's origin when Chrome prompts.
 4. Add optional requirements, select a format and count, then generate cases.
 
-The scan captures visible interactive elements and a screenshot. **Fill Data**
+The scan captures visible interactive elements and a screenshot. You can also
+attach an optional full-page screenshot when broader layout context will make
+the generated coverage more useful. **Fill Data**
 is available only for a live web scan: generate values, choose **Choose fields**,
 select the desired fields, and fill them. A failed fill keeps the selection so
 it can be retried.
+
+## Scan uploaded images
+
+1. In **Scan & Tests**, select **Images**.
+2. Upload one to five related PNG, JPEG, or WebP UI screenshots.
+3. Add optional requirements, then generate the requested test cases.
+
+Image scans and optional full-page web context require a **vision-capable**
+model. Choose a provider model that supports images; text-only models cannot
+generate image-based test cases. TestPilot shows the model capability in
+Settings and blocks generation until a vision-capable model is selected.
 
 ## Scan a Figma Design
 
@@ -95,7 +119,7 @@ npm test        # vitest unit tests
 npm run lint    # oxlint
 ```
 
-## Load the extension in Chrome
+## Build and load from source
 
 1. Run `npm run build` (or `npm run dev` for a watch build).
 2. Open `chrome://extensions`, enable **Developer mode**.

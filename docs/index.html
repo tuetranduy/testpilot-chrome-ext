@@ -21,7 +21,10 @@
         <span class="brand-mark" aria-hidden="true"><span></span></span>
         <span>TestPilot</span>
       </a>
-      <a class="header-link" href="https://github.com/tuetranduy/testpilot-chrome-ext">View on GitHub <span aria-hidden="true">↗</span></a>
+      <nav class="header-nav" aria-label="Primary navigation">
+        <a class="header-link" href="documents.html">Documents</a>
+        <a class="header-link" href="https://github.com/tuetranduy/testpilot-chrome-ext">View on GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
     </header>
 
     <main id="top">
@@ -29,9 +32,9 @@
         <div class="hero-copy">
           <p class="eyebrow"><span class="eyebrow-dot"></span> AI-assisted manual QA for Chrome</p>
           <h1 id="hero-title">Stop writing the same manual test cases by hand.</h1>
-          <p class="hero-lede">TestPilot turns a live web page or Figma Design into a focused QA workspace. Scan the UI, bring in acceptance criteria, and generate exactly the coverage you need.</p>
+          <p class="hero-lede">TestPilot turns a live web page, uploaded image, or Figma Design into a focused QA workspace. Scan the UI, bring in acceptance criteria, and generate exactly the coverage you need.</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="https://github.com/tuetranduy/testpilot-chrome-ext#load-the-extension">Try TestPilot <span aria-hidden="true">↗</span></a>
+            <a class="button button-primary" href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip">Download TestPilot <span aria-hidden="true">↓</span></a>
             <a class="text-link" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a>
           </div>
         </div>
@@ -67,14 +70,14 @@
 
         <div id="how-it-works" class="section-heading" data-reveal><span class="section-number">01</span><h2>From live UI to testable plan</h2></div>
         <div class="feature-grid">
-          <section class="feature-card feature-scan" data-reveal><span class="feature-index">01 / SCAN</span><h3>Start from web or design.</h3><p>Inspect the current page's interactive DOM and screenshot, or import a Figma page, frame, section, or component with a rendered preview and compact design structure.</p><div class="element-stack"><span>Web · input · email</span><span>Figma · Checkout frame</span><span>Figma · Button component</span></div></section>
+          <section class="feature-card feature-scan" data-reveal><span class="feature-index">01 / SCAN</span><h3>Start from web, images, or design.</h3><p>Inspect the current page's interactive DOM and screenshot, upload related UI images, or import a Figma page, frame, section, or component with a rendered preview and compact design structure. Add an optional full-page screenshot when the whole web layout matters.</p><div class="element-stack"><span>Web · input · email</span><span>Image · checkout states</span><span>Figma · Button component</span></div></section>
           <section class="feature-card feature-tests" data-reveal><span class="feature-index">02 / GENERATE</span><h3>Ask for an exact suite.</h3><p>Choose 5, 10, 15, or 20 test cases—or enter any count from 1 to 50. Generate plain steps or Gherkin, with deduplication and progress across batches.</p><div class="case-preview"><span>✓</span><div><b>10 of 10 scenarios</b><small>Review · Markdown · CSV · .feature</small></div></div></section>
           <section class="feature-card feature-fill" data-reveal><span class="feature-index">03 / FILL</span><h3>Fill only what matters.</h3><p>Generate realistic web-form data that respects field constraints. Open the field checklist, select all, clear it, or fill only the values needed for this test.</p><div class="data-lines"><span><i></i> ✓ Email address</span><span><i></i> ✓ Shipping country</span><span><i></i> ○ Telephone</span></div></section>
         </div>
 
         <section class="editorial-block">
           <div class="pull-quote" data-reveal="left">“The goal is not to replace the tester. It is to give the tester a sharper first draft.”</div>
-          <div data-reveal><p>AI is useful when it handles the blank page and stays open to correction. That is the role TestPilot is designed for: gather the raw material, suggest coverage, and leave the final call with the person who understands the product.</p><p>Generated cases can be reviewed and exported to Markdown, CSV, or one combined Gherkin <code>.feature</code> file. Source-aware local history keeps web and Figma runs ready to revisit.</p></div>
+          <div data-reveal><p>AI is useful when it handles the blank page and stays open to correction. That is the role TestPilot is designed for: gather the raw material, suggest coverage, and leave the final call with the person who understands the product.</p><p>Image and full-page context requires a vision-capable model. Generated cases can be reviewed and exported to Markdown, CSV, or one combined Gherkin <code>.feature</code> file. Source-aware local history keeps web, image, and Figma runs ready to revisit.</p></div>
         </section>
 
         <div class="section-heading" data-reveal><span class="section-number">02</span><h2>Built for control, not surprise</h2></div>
@@ -85,8 +88,8 @@
         </section>
 
         <section class="getting-started">
-          <div data-reveal="left"><p class="eyebrow">Start in a few minutes</p><h2>Bring TestPilot to your next test session.</h2><p>TestPilot is open source and currently loaded unpacked in Chrome. Build it locally, configure your preferred provider, and try it on a web page or Figma Design.</p></div>
-          <div class="steps" data-reveal><div><span>1</span><p>Clone the repository and run <code>npm install</code>.</p></div><div><span>2</span><p>Build with <code>npm run build</code>.</p></div><div><span>3</span><p>Load <code>dist/</code> from <code>chrome://extensions</code>.</p></div></div>
+          <div data-reveal="left"><p class="eyebrow">Start in a few minutes</p><h2>Bring TestPilot to your next test session.</h2><p>Download the packaged release, extract it, configure your preferred provider, and load it unpacked in Chrome. <a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest">See the latest release notes.</a></p></div>
+          <div class="steps" data-reveal><div><span>1</span><p><a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip">Download the latest release ZIP</a>.</p></div><div><span>2</span><p>Extract the ZIP to a permanent folder.</p></div><div><span>3</span><p>In <code>chrome://extensions</code>, enable Developer mode, choose <strong>Load unpacked</strong>, and select the extracted folder.</p></div></div>
         </section>
       </article>
     </main>
