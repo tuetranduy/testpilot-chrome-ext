@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en" data-marketing-site>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Set up TestPilot for Chrome with the stable release, an AI provider or local model, and optional Figma access." />
+    <meta property="og:title" content="Set up TestPilot" />
+    <meta property="og:description" content="Install TestPilot and connect OpenAI, Gemini, Anthropic, a local model, or Figma with this step-by-step guide." />
+    <meta property="og:type" content="article" />
+    <title>Documents | TestPilot setup guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="motion.js"></script>
+  </head>
+  <body class="documents-page">
+    <a class="skip-link" href="#main-content">Skip to setup guide</a>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="TestPilot home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>TestPilot</span>
+      </a>
+      <nav class="header-nav" aria-label="Primary navigation">
+        <a class="header-link" href="index.html">Home</a>
+        <a class="header-link" href="documents.html" aria-current="page">Documents</a>
+        <a class="header-link" href="https://github.com/tuetranduy/testpilot-chrome-ext">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="document-hero shell" aria-labelledby="document-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-dot"></span> Installation &amp; connections</p>
+          <h1 id="document-title">Set up TestPilot, step by step.</h1>
+          <p class="document-lede">Install the stable Chrome extension, connect one AI provider, and add Figma access only if your test workflow needs design files.</p>
+        </div>
+        <aside class="before-card" aria-label="Before you start">
+          <p class="before-label">Before you start</p>
+          <ul>
+            <li>Google Chrome on desktop</li>
+            <li>One AI provider or local server</li>
+            <li>About five minutes</li>
+          </ul>
+        </aside>
+      </section>
+
+      <div class="docs-layout shell">
+        <nav class="docs-toc" aria-label="On this page">
+          <p>On this page</p>
+          <a href="#install"><span>01</span> Install TestPilot</a>
+          <a href="#ai-provider"><span>02</span> Connect AI</a>
+          <a href="#figma-token"><span>03</span> Connect Figma</a>
+          <a href="#troubleshooting"><span>04</span> Troubleshoot</a>
+        </nav>
+
+        <article class="docs-content">
+          <section id="install" class="guide-section" aria-labelledby="install-title">
+            <div class="guide-heading">
+              <span class="section-number">01</span>
+              <div>
+                <p class="eyebrow">Stable release</p>
+                <h2 id="install-title">Install the extension</h2>
+                <p>Use the packaged release for normal use. The source-build instructions on GitHub are for contributors.</p>
+              </div>
+            </div>
+
+            <ol class="docs-steps" data-install-steps>
+              <li>
+                <span class="step-number">1</span>
+                <div><strong>Download the latest stable release ZIP.</strong><p><a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip">Download TestPilot for Chrome</a>. If the download does not begin, open the <a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest">latest release page</a>.</p></div>
+              </li>
+              <li>
+                <span class="step-number">2</span>
+                <div><strong>Extract the ZIP to a permanent folder.</strong><p>Do not leave it inside Downloads if you regularly clean that folder. Chrome needs the extracted files to remain in place.</p></div>
+              </li>
+              <li>
+                <span class="step-number">3</span>
+                <div><strong>Open <code>chrome://extensions</code> and enable Developer mode.</strong><p>Paste the address into Chrome’s address bar. Turn on <strong>Developer mode</strong> in the upper-right corner.</p></div>
+              </li>
+              <li>
+                <span class="step-number">4</span>
+                <div><strong>Choose Load unpacked and select the extracted folder.</strong><p>Pin TestPilot from Chrome’s Extensions menu, then open its side panel. Updates require downloading and extracting the new stable ZIP, then choosing <strong>Reload</strong> on this extensions page.</p></div>
+              </li>
+            </ol>
+
+            <figure class="product-figure figure-portrait" data-reveal>
+              <div class="product-frame">
+                <img data-product-screenshot src="assets/testpilot-scan-workspace.png" alt="TestPilot side panel after installation, showing the Scan, Fill, History, and Settings tabs above the web page scan controls." width="760" height="1520" loading="lazy" decoding="async" />
+              </div>
+              <figcaption><strong>Check the install.</strong> Open the side panel and confirm that the four TestPilot tabs appear. Select <strong>Settings</strong> next.</figcaption>
+            </figure>
+          </section>
+
+          <section id="ai-provider" class="guide-section" aria-labelledby="provider-title">
+            <div class="guide-heading">
+              <span class="section-number">02</span>
+              <div>
+                <p class="eyebrow">Choose one connection</p>
+                <h2 id="provider-title">Connect an AI provider</h2>
+                <p>In TestPilot, open <strong>Settings</strong>, choose an <strong>Active provider</strong>, add its credential and model, or choose <strong>Fetch available models</strong>. Then select <strong>Test connection</strong> and <strong>Save settings</strong>.</p>
+              </div>
+            </div>
+
+            <aside class="security-callout">
+              <span aria-hidden="true">⌁</span>
+              <div><strong>Treat credentials like passwords.</strong><p>TestPilot stores provider keys only in <code>chrome.storage.local</code> on this Chrome profile. Never publish, share, or commit a credential. Revoke it at the provider if you think it was exposed.</p></div>
+            </aside>
+
+            <figure class="product-figure figure-landscape" data-reveal>
+              <div class="product-frame">
+                <img data-product-screenshot src="assets/testpilot-settings-providers.png" alt="TestPilot Settings with OpenAI selected, an empty API key field, a model field, Fetch available models, and Test connection controls." width="1000" height="1346" loading="lazy" decoding="async" />
+              </div>
+              <figcaption><strong>The real Settings screen.</strong> Credential fields are empty in this locally rendered product screenshot; paste your own key only in your installed extension.</figcaption>
+            </figure>
+
+            <div class="provider-grid">
+              <section class="provider-card" data-provider="openai">
+                <span class="provider-index">A</span>
+                <h3>OpenAI</h3>
+                <ol>
+                  <li>Sign in and <a href="https://platform.openai.com/api-keys">create an OpenAI API key</a>.</li>
+                  <li>In TestPilot Settings, choose <strong>OpenAI</strong> as the Active provider and paste it into <strong>OpenAI API key</strong>.</li>
+                  <li>Keep the suggested model or fetch another model, then choose <strong>Test connection</strong>.</li>
+                </ol>
+              </section>
+
+              <section class="provider-card" data-provider="gemini">
+                <span class="provider-index">B</span>
+                <h3>Gemini</h3>
+                <ol>
+                  <li>Sign in to Google AI Studio and <a href="https://aistudio.google.com/app/apikey">create or view a Gemini API key</a>.</li>
+                  <li>In TestPilot Settings, choose <strong>Gemini</strong> and paste it into <strong>Gemini API key</strong>.</li>
+                  <li>Select a model, choose <strong>Test connection</strong>, and save when the connection succeeds.</li>
+                </ol>
+              </section>
+
+              <section class="provider-card" data-provider="anthropic">
+                <span class="provider-index">C</span>
+                <h3>Anthropic</h3>
+                <ol>
+                  <li>Sign in to the Claude Platform and <a href="https://platform.claude.com/settings/keys">create a Claude API key</a>.</li>
+                  <li>In TestPilot Settings, choose <strong>Claude (Anthropic)</strong> and paste it into <strong>Claude (Anthropic) API key</strong>.</li>
+                  <li>Select a model, choose <strong>Test connection</strong>, and save when the connection succeeds.</li>
+                </ol>
+              </section>
+
+              <section class="provider-card" data-provider="local">
+                <span class="provider-index">D</span>
+                <h3>Local OpenAI-compatible server</h3>
+                <ol>
+                  <li>Install and start a compatible server. For one documented option, see <a href="https://docs.ollama.com/api/openai-compatibility">Ollama’s OpenAI compatibility guide</a>.</li>
+                  <li>Choose <strong>Local LLM</strong>, enter the served model name, and set <strong>Local LLM base URL</strong>. TestPilot defaults to <code>http://localhost:11434/v1</code>.</li>
+                  <li>Choose <strong>Test connection</strong>. For image scans, use a local model that accepts image input and enable that capability when TestPilot asks.</li>
+                </ol>
+              </section>
+            </div>
+
+            <p class="save-note"><strong>Finish every provider path:</strong> after the connection test succeeds, choose <strong>Save settings</strong>. Provider usage, billing, quotas, and data handling remain governed by the provider you selected.</p>
+          </section>
+
+          <section id="figma-token" class="guide-section" aria-labelledby="figma-title">
+            <div class="guide-heading">
+              <span class="section-number">03</span>
+              <div>
+                <p class="eyebrow">Optional design access</p>
+                <h2 id="figma-title">Connect Figma</h2>
+                <p>Add a token only if you plan to scan Figma Design files. TestPilot does not require Figma for live-page or uploaded-image scans.</p>
+              </div>
+            </div>
+
+            <ol class="docs-steps compact-steps">
+              <li><span class="step-number">1</span><div><strong>Open Figma’s official token instructions.</strong><p>Follow the <a href="https://developers.figma.com/docs/rest-api/personal-access-tokens/">personal access token guide</a>: account menu → Settings → Security → Generate new token.</p></div></li>
+              <li><span class="step-number">2</span><div><strong>Limit the token.</strong><p>Choose an expiry of no more than <strong>90 days</strong>, select only the <code>file_content:read</code> scope, and limit file access to the designs you need.</p></div></li>
+              <li><span class="step-number">3</span><div><strong>Copy it once and store it safely.</strong><p>Figma shows a new token once. Do not put it in screenshots, messages, source files, or tickets.</p></div></li>
+              <li><span class="step-number">4</span><div><strong>Save it in TestPilot.</strong><p>Open <strong>Settings</strong> → <strong>Figma connection</strong>, paste the token, and choose <strong>Save settings</strong>.</p></div></li>
+            </ol>
+
+            <aside class="expiry-callout"><strong>Set a rotation reminder.</strong><p>Replace the token before its expiry date. If a Figma import begins returning an access error, generate a replacement with <code>file_content:read</code>, save it in TestPilot, and retry the import.</p></aside>
+          </section>
+
+          <section id="troubleshooting" class="guide-section" aria-labelledby="troubleshooting-title">
+            <div class="guide-heading">
+              <span class="section-number">04</span>
+              <div>
+                <p class="eyebrow">Quick checks</p>
+                <h2 id="troubleshooting-title">If setup does not connect</h2>
+              </div>
+            </div>
+            <dl class="troubleshooting-list">
+              <div><dt>Chrome says the manifest is missing.</dt><dd>Select the extracted extension folder itself—the folder that contains <code>manifest.json</code>—not the ZIP or a parent folder.</dd></div>
+              <div><dt>The provider test fails.</dt><dd>Confirm the correct provider is active, re-paste the key, check provider billing or quota status, and fetch the currently available models.</dd></div>
+              <div><dt>A local model cannot connect.</dt><dd>Keep the server running, confirm its OpenAI-compatible base URL and model name, and allow TestPilot’s requested local-origin access.</dd></div>
+              <div><dt>Figma returns 403 or an access error.</dt><dd>Confirm the token has <code>file_content:read</code>, can access that file, and has not expired.</dd></div>
+            </dl>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer shell"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><span></span></span><span>TestPilot</span></a><p>Setup guidance for the stable Chrome release.</p><a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest">Latest release ↗</a></footer>
+  </body>
+</html>

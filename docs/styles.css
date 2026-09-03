@@ -63,3 +63,73 @@ a{cursor:pointer}.button-primary,.text-link,.header-link,.site-footer a:last-chi
 
 @media (min-width:561px) and (max-width:850px){.hero-video-frame{aspect-ratio:1}}
 @media (max-width:560px){.hero-video-frame{aspect-ratio:9/16}.hero-media-caption{justify-content:center;gap:7px;font-size:10px}}
+
+/* Documents: a calm, sequential setup guide built from the marketing system. */
+.documents-page{background:linear-gradient(180deg,#edf4ed 0,rgba(245,247,242,0) 520px),var(--paper)}
+.documents-page .header-link[aria-current="page"]{color:var(--deep);text-decoration:underline;text-decoration-color:var(--orange);text-decoration-thickness:2px;text-underline-offset:7px}
+.document-hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(270px,.6fr);align-items:end;gap:64px;padding:86px 0 88px}
+.document-hero h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(48px,6.2vw,82px);line-height:1;letter-spacing:-.075em;max-width:770px;margin:0 0 25px}
+.document-lede{max-width:690px;margin:0;color:var(--muted);font-size:19px;line-height:1.6}
+.before-card{background:var(--deep);color:#fff;border-radius:4px;padding:26px 28px;box-shadow:var(--shadow)}
+.before-label{margin:0 0 14px;color:var(--mint);font-family:"Space Grotesk",sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.before-card ul{list-style:none;margin:0;padding:0}
+.before-card li{position:relative;padding:10px 0 10px 22px;border-top:1px solid #316153;color:#d8e7df;font-size:14px}
+.before-card li::before{content:"";position:absolute;left:2px;top:18px;width:7px;height:7px;border-radius:50%;background:var(--mint)}
+.docs-layout{display:grid;grid-template-columns:210px minmax(0,1fr);align-items:start;gap:74px;padding-bottom:92px}
+.docs-toc{position:sticky;top:24px;border-top:1px solid var(--line);padding-top:15px}
+.docs-toc p{margin:0 0 10px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.docs-toc a{display:flex;align-items:baseline;gap:11px;min-height:44px;padding:10px 8px 10px 0;color:var(--muted);font-size:13px;font-weight:600;line-height:1.35;text-decoration:none}
+.docs-toc a span{color:var(--orange);font-family:"Space Grotesk",sans-serif;font-size:10px;letter-spacing:.08em}
+.docs-toc a:hover{color:var(--green)}
+.docs-content{min-width:0}
+.guide-section{scroll-margin-top:24px;border-top:1px solid var(--line);padding:24px 0 104px}
+.guide-heading{display:grid;grid-template-columns:34px minmax(0,1fr);gap:18px;margin-bottom:36px}
+.guide-heading .section-number{padding-top:10px}
+.guide-heading .eyebrow{margin-bottom:10px}
+.guide-heading h2{font-family:"Space Grotesk",sans-serif;font-size:clamp(34px,4vw,52px);line-height:1.05;letter-spacing:-.065em;margin:0 0 14px}
+.guide-heading p:last-child{max-width:710px;margin:0;color:var(--muted);font-size:17px}
+.docs-steps{list-style:none;margin:0;padding:0;border:1px solid var(--line);background:rgba(255,255,255,.7)}
+.docs-steps>li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:17px;padding:25px 28px;border-bottom:1px solid var(--line)}
+.docs-steps>li:last-child{border-bottom:0}
+.step-number{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--deep);color:var(--mint);font-family:"Space Grotesk",sans-serif;font-size:12px;font-weight:700}
+.docs-steps strong{font-family:"Space Grotesk",sans-serif;font-size:18px;letter-spacing:-.025em}
+.docs-steps p{margin:5px 0 0;color:var(--muted)}
+.docs-content a{color:var(--green);font-weight:700;text-decoration-color:#8bb9a3;text-underline-offset:3px}
+.docs-content a:hover{text-decoration-color:var(--green)}
+.product-figure{display:grid;align-items:center;gap:42px;margin:48px 0 0;padding:35px;background:#dcecdf;border-radius:4px}
+.figure-portrait{grid-template-columns:minmax(260px,390px) minmax(220px,1fr)}
+.figure-landscape{grid-template-columns:minmax(300px,500px) minmax(220px,1fr);background:#d5e4ee}
+.product-frame{overflow:hidden;border-radius:18px;background:#09111f;box-shadow:0 20px 50px rgba(18,63,52,.2)}
+.product-frame img{display:block;width:100%;height:auto;object-fit:contain;object-position:top}
+.product-figure figcaption{color:#456258;font-size:15px;line-height:1.6}
+.product-figure figcaption strong{display:block;margin-bottom:8px;color:var(--deep);font-family:"Space Grotesk",sans-serif;font-size:24px;line-height:1.15;letter-spacing:-.04em}
+.security-callout{display:flex;align-items:flex-start;gap:15px;margin-bottom:36px;padding:20px 22px;border-left:4px solid var(--orange);background:#fff}
+.security-callout>span{color:var(--orange);font-family:"Space Grotesk",sans-serif;font-size:25px}
+.security-callout strong{font-family:"Space Grotesk",sans-serif;font-size:17px}
+.security-callout p{margin:3px 0 0;color:var(--muted);font-size:14px}
+.provider-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:36px}
+.provider-card{position:relative;min-width:0;padding:28px;border:1px solid var(--line);background:#fff}
+.provider-card h3{margin:6px 0 17px;padding-right:36px;font-family:"Space Grotesk",sans-serif;font-size:24px;line-height:1.1;letter-spacing:-.045em}
+.provider-index{position:absolute;right:22px;top:22px;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#e1eee4;color:var(--green);font-family:"Space Grotesk",sans-serif;font-size:11px;font-weight:700}
+.provider-card ol{margin:0;padding-left:20px;color:var(--muted);font-size:14px}
+.provider-card li{padding:4px 0 8px}
+.provider-card code,.save-note code{overflow-wrap:anywhere}
+.save-note{margin:18px 0 0;padding:18px 20px;background:#f8d7bf;color:#6f4d3f;font-size:14px}
+.save-note strong{color:#51372d}
+.compact-steps{max-width:790px}
+.expiry-callout{max-width:790px;margin-top:22px;padding:22px 25px;border:1px solid #b8d3c0;background:#e4f0e6}
+.expiry-callout strong{font-family:"Space Grotesk",sans-serif;font-size:18px}
+.expiry-callout p{margin:5px 0 0;color:var(--muted)}
+.troubleshooting-list{margin:0;border:1px solid var(--line);background:#fff}
+.troubleshooting-list>div{display:grid;grid-template-columns:minmax(180px,.65fr) minmax(0,1fr);gap:30px;padding:22px 25px;border-bottom:1px solid var(--line)}
+.troubleshooting-list>div:last-child{border-bottom:0}
+.troubleshooting-list dt{font-family:"Space Grotesk",sans-serif;font-size:16px;font-weight:700;line-height:1.35}
+.troubleshooting-list dd{margin:0;color:var(--muted);font-size:14px}
+
+@media (max-width:850px){
+  .document-hero{grid-template-columns:1fr;align-items:start;gap:36px;padding:64px 0 70px}.before-card{max-width:480px}.docs-layout{grid-template-columns:1fr;gap:40px}.docs-toc{position:static;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;border-top:0;padding:0}.docs-toc p{grid-column:1/-1}.docs-toc a{align-items:center;padding:10px;border:1px solid var(--line);background:#fff}.figure-portrait,.figure-landscape{grid-template-columns:minmax(240px,390px) minmax(0,1fr);gap:30px;padding:28px}.provider-grid{grid-template-columns:1fr}.guide-section{padding-bottom:84px}
+}
+
+@media (max-width:560px){
+  .documents-page .site-header{height:auto;min-height:68px;padding:12px 0;gap:10px}.documents-page .header-nav{gap:9px}.documents-page .header-link{font-size:11px}.document-hero{padding:48px 0 58px}.document-hero h1{font-size:46px}.document-lede{font-size:17px}.before-card{padding:22px}.docs-layout{gap:30px;padding-bottom:62px}.docs-toc{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-section{padding:20px 0 68px}.guide-heading{grid-template-columns:1fr;gap:6px;margin-bottom:27px}.guide-heading .section-number{padding:0}.guide-heading h2{font-size:36px}.guide-heading p:last-child{font-size:16px}.docs-steps>li{grid-template-columns:36px minmax(0,1fr);gap:12px;padding:21px 18px}.step-number{width:30px;height:30px}.docs-steps strong{font-size:16px}.product-figure,.figure-portrait,.figure-landscape{grid-template-columns:1fr;gap:24px;margin-top:34px;padding:20px}.product-frame{max-width:390px;margin:0 auto}.product-figure figcaption strong{font-size:21px}.security-callout{padding:18px 16px}.provider-card{padding:23px 20px}.provider-card h3{font-size:22px}.troubleshooting-list>div{grid-template-columns:1fr;gap:7px;padding:20px}.documents-page .site-footer{padding-bottom:32px}
+}
