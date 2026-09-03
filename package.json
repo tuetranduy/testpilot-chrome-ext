@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "icons:build": "swift scripts/export-icons.swift",
     "lint": "oxlint",
+    "marketing:render": "node marketing/render.mjs",
+    "marketing:test": "vitest run marketing/scene.test.mjs marketing/render.test.mjs",
     "test": "vitest run",
     "preview": "vite preview"
   },
