@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { PRESETS, frameCount, renderMarketingFrame } from './scene.mjs'
@@ -11,6 +11,23 @@ const OUTPUT_NAMES = {
   gif: 'testpilot-marketing-preview.gif',
   square: 'testpilot-marketing-square.mp4',
   vertical: 'testpilot-marketing-vertical.mp4',
+}
+
+const RASTER_FONT_CANDIDATES = [
+  process.env.TESTPILOT_MARKETING_FONT,
+  '/System/Library/Fonts/Supplemental/Arial.ttf',
+  '/System/Library/Fonts/Helvetica.ttc',
+  '/Library/Fonts/Arial.ttf',
+  '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+  'C:\\Windows\\Fonts\\arial.ttf',
+].filter(Boolean)
+
+function resolveRasterFontPath() {
+  const fontPath = RASTER_FONT_CANDIDATES.find((candidate) => existsSync(candidate))
+  if (!fontPath) {
+    throw new Error('A rasterization font is required. Set TESTPILOT_MARKETING_FONT to an installed TTF or TTC font file.')
+  }
+  return fontPath
 }
 
 export function parseArgs(argv) {
@@ -99,6 +116,7 @@ function requireMediaCommands(runCommand) {
 export function renderPreset(presetName, {
   outputDir,
   keepFrames = false,
+  fontPath = resolveRasterFontPath(),
   runCommand = defaultRunCommand,
 } = {}) {
   const preset = PRESETS[presetName]
@@ -123,7 +141,7 @@ export function renderPreset(presetName, {
       height: preset.height,
     })
     writeFileSync(svgPath, svg)
-    runCommand(['convert', '-background', 'none', svgPath, pngPath])
+    runCommand(['convert', '-font', fontPath, '-background', 'none', svgPath, pngPath])
   }
 
   const [encodeCommand] = buildEncodeCommands(presetName, preset, frameDir, outputDir)

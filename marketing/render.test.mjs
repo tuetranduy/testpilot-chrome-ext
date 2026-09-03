@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test } from 'vitest'
 import { buildEncodeCommands, parseArgs, renderPreset } from './render.mjs'
 
 const temporaryDirectories = []
+const TEST_FONT_PATH = '/fonts/TestPilotSans.ttf'
 
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) {
@@ -58,10 +59,15 @@ describe('marketing render CLI', () => {
     let firstSvg = ''
     const runCommand = (command) => {
       commands.push(command)
-      if (command[0] === 'convert' && !firstSvg) firstSvg = readFileSync(command[3], 'utf8')
+      if (command[0] === 'convert' && !firstSvg) firstSvg = readFileSync(command.at(-2), 'utf8')
     }
 
-    const result = renderPreset('gif', { presetName: 'gif', outputDir, runCommand })
+    const result = renderPreset('gif', {
+      presetName: 'gif',
+      outputDir,
+      fontPath: TEST_FONT_PATH,
+      runCommand,
+    })
 
     expect(result).toEqual({
       presetName: 'gif',
@@ -94,6 +100,7 @@ describe('marketing render CLI', () => {
     renderPreset('gif', {
       presetName: 'gif',
       outputDir,
+      fontPath: TEST_FONT_PATH,
       keepFrames: true,
       runCommand: () => {},
     })
@@ -101,6 +108,23 @@ describe('marketing render CLI', () => {
     const frameDir = path.join(outputDir, '.frames', 'gif')
     expect(existsSync(path.join(frameDir, 'frame-0000.svg'))).toBe(true)
     expect(existsSync(path.join(frameDir, 'frame-0179.svg'))).toBe(true)
+  })
+
+  test('passes an explicit raster font to ImageMagick', () => {
+    const outputDir = makeOutputDirectory()
+    const commands = []
+
+    renderPreset('gif', {
+      outputDir,
+      fontPath: TEST_FONT_PATH,
+      runCommand: (command) => commands.push(command),
+    })
+
+    expect(commands.find(([command]) => command === 'convert')).toEqual([
+      'convert', '-font', TEST_FONT_PATH, '-background', 'none',
+      path.join(outputDir, '.frames', 'gif', 'frame-0000.svg'),
+      path.join(outputDir, '.frames', 'gif', 'frame-0000.png'),
+    ])
   })
 
   test('reports the exact missing media command with installation guidance', () => {
@@ -112,6 +136,7 @@ describe('marketing render CLI', () => {
     expect(() => renderPreset('master', {
       presetName: 'master',
       outputDir,
+      fontPath: TEST_FONT_PATH,
       runCommand,
     })).toThrow(/convert.*Install ImageMagick/is)
   })

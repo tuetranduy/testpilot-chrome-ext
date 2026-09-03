@@ -79,7 +79,7 @@ function sourceCard(entrance, narrow) {
   const x = narrow ? (DESIGN_WIDTH - width) / 2 : 760
   const y = narrow ? 430 : 245
   const slide = (1 - entrance) * (narrow ? 180 : 130)
-  return `<g transform="translate(${number(slide)} 0) rotate(-3 ${number(x + width / 2)} ${number(y + height / 2)})">
+  return `<g transform="translate(${number(slide)} 0)">
     ${roundedRect(x, y, width, height, COLORS.white, 32, `stroke="${COLORS.line}" stroke-width="3"`)}
     ${roundedRect(x, y, width, 70, '#eef2ed', 32)}
     <circle cx="${number(x + 34)}" cy="${number(y + 35)}" r="8" fill="${COLORS.orange}"/><circle cx="${number(x + 62)}" cy="${number(y + 35)}" r="8" fill="#f5c75f"/><circle cx="${number(x + 90)}" cy="${number(y + 35)}" r="8" fill="#67c58b"/>

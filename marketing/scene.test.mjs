@@ -31,6 +31,12 @@ describe('marketing scene', () => {
     expect(ending).toContain('TestPilot')
   })
 
+  test('wide opening uses ImageMagick-compatible card transforms', () => {
+    const opening = renderMarketingFrame({ time: 1, width: 1920, height: 1080 })
+
+    expect(opening).not.toContain('rotate(')
+  })
+
   test('stacks narrow headline, active card, and supporting elements inside the canvas', () => {
     for (const height of [1080, 1920]) {
       const frame = renderMarketingFrame({ time: 7.5, width: 1080, height })
