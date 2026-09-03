@@ -21,7 +21,8 @@ describe('latest release marketing contract', () => {
     const page = document.createElement('div')
     page.innerHTML = marketing
 
-    expect(page.querySelector('a[href="documents.html"]')?.textContent).toContain('Documents')
+    const documentsLink = page.querySelector('header .header-nav[aria-label="Primary navigation"] a.header-link[href="documents.html"]')
+    expect(documentsLink?.textContent).toContain('Documents')
   })
 
   test('explains image uploads, optional full-page context, and vision requirements', () => {
@@ -30,11 +31,31 @@ describe('latest release marketing contract', () => {
     expect(marketing).toMatch(/vision-capable/i)
   })
 
+  test('keeps search and social descriptions aligned with image and vision features', () => {
+    const page = document.createElement('div')
+    page.innerHTML = marketing
+
+    const descriptions = [
+      page.querySelector('meta[name="description"]')?.getAttribute('content'),
+      page.querySelector('meta[property="og:description"]')?.getAttribute('content'),
+    ]
+
+    for (const description of descriptions) {
+      expect(description).toMatch(/image/i)
+      expect(description).toMatch(/full-page/i)
+      expect(description).toMatch(/vision-capable/i)
+    }
+  })
+
   test('guides end users through downloading, extracting, and loading the packaged release', () => {
+    const normalizedReadme = readme.replace(/\s+/g, ' ')
+
     expect(readme).toContain(latestDownload)
     expect(readme).toMatch(/download/i)
     expect(readme).toMatch(/extract/i)
     expect(readme).toMatch(/load unpacked/i)
     expect(readme).toMatch(/vision-capable/i)
+    expect(normalizedReadme).toMatch(/live web page, uploaded image, or a Figma Design/i)
+    expect(normalizedReadme).toMatch(/web, image, and Figma runs/i)
   })
 })

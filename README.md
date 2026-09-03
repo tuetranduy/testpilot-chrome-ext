@@ -1,8 +1,8 @@
 # TestPilot
 
-AI-assisted Chrome extension for manual QA. Scan a live web page or a Figma
-Design, add requirements, generate an exact number of reviewable test cases,
-and fill selected form fields with realistic test data.
+AI-assisted Chrome extension for manual QA. Scan a live web page, uploaded
+image, or a Figma Design, add requirements, generate an exact number of
+reviewable test cases, and fill selected form fields with realistic test data.
 
 ## Install the latest release
 
@@ -27,8 +27,8 @@ See the [latest release notes](https://github.com/tuetranduy/testpilot-chrome-ex
   available.
 - **Portable exports** — download Markdown and CSV suites, or one combined
   `.feature` file when every current case contains Gherkin.
-- **Source-aware history** — web and Figma runs are stored locally and labelled
-  with their source, display name, and URL.
+- **Source-aware history** — web, image, and Figma runs are stored locally and
+  labelled with their source, display name, and URL.
 - **Provider settings** — configure OpenAI, Gemini, Anthropic (Claude), or a
   local OpenAI-compatible LLM such as Ollama or LM Studio.
 
