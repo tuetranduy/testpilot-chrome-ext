@@ -33,49 +33,92 @@
 ### Task 1: Define the scene model and SVG renderer
 
 **Files:**
+
 - Create: `marketing/scene.mjs`
 - Test: `marketing/scene.test.mjs`
 
 **Interfaces:**
+
 - Produces `TIMELINE`, `PRESETS`, `frameCount(preset)`, `renderMarketingFrame({ time, width, height })`, `clamp(value, min, max)`, and `easeOut(value)`.
 - `renderMarketingFrame()` returns a complete SVG string with `width`, `height`, and a `viewBox` matching the requested canvas.
 
 - [ ] **Step 1: Write failing tests for the scene contract**
 
 ```js
-import { describe, expect, test } from 'vitest'
-import { TIMELINE, PRESETS, frameCount, renderMarketingFrame } from './scene.mjs'
+import { describe, expect, test } from "vitest";
+import {
+  TIMELINE,
+  PRESETS,
+  frameCount,
+  renderMarketingFrame,
+} from "./scene.mjs";
 
-describe('marketing scene', () => {
-  test('timeline is ordered and covers the full 12 second edit', () => {
-    expect(TIMELINE[0].start).toBe(0)
-    expect(TIMELINE.at(-1).end).toBe(12)
-    expect(TIMELINE.every((beat, index) => index === 0 || beat.start === TIMELINE[index - 1].end)).toBe(true)
-  })
+describe("marketing scene", () => {
+  test("timeline is ordered and covers the full 12 second edit", () => {
+    expect(TIMELINE[0].start).toBe(0);
+    expect(TIMELINE.at(-1).end).toBe(12);
+    expect(
+      TIMELINE.every(
+        (beat, index) => index === 0 || beat.start === TIMELINE[index - 1].end,
+      ),
+    ).toBe(true);
+  });
 
-  test('presets expose the approved dimensions and frame rate', () => {
-    expect(PRESETS.master).toMatchObject({ width: 1920, height: 1080, fps: 30, duration: 12 })
-    expect(PRESETS.gif).toMatchObject({ width: 960, height: 540, fps: 15, duration: 12 })
-    expect(PRESETS.square).toMatchObject({ width: 1080, height: 1080, fps: 30, duration: 12 })
-    expect(PRESETS.vertical).toMatchObject({ width: 1080, height: 1920, fps: 30, duration: 12 })
-  })
+  test("presets expose the approved dimensions and frame rate", () => {
+    expect(PRESETS.master).toMatchObject({
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      duration: 12,
+    });
+    expect(PRESETS.gif).toMatchObject({
+      width: 960,
+      height: 540,
+      fps: 15,
+      duration: 12,
+    });
+    expect(PRESETS.square).toMatchObject({
+      width: 1080,
+      height: 1080,
+      fps: 30,
+      duration: 12,
+    });
+    expect(PRESETS.vertical).toMatchObject({
+      width: 1080,
+      height: 1920,
+      fps: 30,
+      duration: 12,
+    });
+  });
 
-  test('frame count is deterministic', () => {
-    expect(frameCount(PRESETS.master)).toBe(360)
-    expect(frameCount(PRESETS.gif)).toBe(180)
-  })
+  test("frame count is deterministic", () => {
+    expect(frameCount(PRESETS.master)).toBe(360);
+    expect(frameCount(PRESETS.gif)).toBe(180);
+  });
 
-  test('representative frames contain the approved story copy and lockup', () => {
-    const opening = renderMarketingFrame({ time: 1, width: 1920, height: 1080 })
-    const middle = renderMarketingFrame({ time: 7.5, width: 1920, height: 1080 })
-    const ending = renderMarketingFrame({ time: 10.5, width: 1920, height: 1080 })
-    expect(opening).toContain('From design to live page.')
-    expect(middle).toContain('Fill realistic data.')
-    expect(middle).toContain('Scan')
-    expect(ending).toContain('Sharper first drafts.')
-    expect(ending).toContain('TestPilot')
-  })
-})
+  test("representative frames contain the approved story copy and lockup", () => {
+    const opening = renderMarketingFrame({
+      time: 1,
+      width: 1920,
+      height: 1080,
+    });
+    const middle = renderMarketingFrame({
+      time: 7.5,
+      width: 1920,
+      height: 1080,
+    });
+    const ending = renderMarketingFrame({
+      time: 10.5,
+      width: 1920,
+      height: 1080,
+    });
+    expect(opening).toContain("From design to live page.");
+    expect(middle).toContain("Fill realistic data.");
+    expect(middle).toContain("Scan");
+    expect(ending).toContain("Sharper first drafts.");
+    expect(ending).toContain("TestPilot");
+  });
+});
 ```
 
 - [ ] **Step 2: Run the focused tests and confirm they fail**
@@ -90,12 +133,12 @@ Define the exact scene data:
 
 ```js
 export const TIMELINE = [
-  { id: 'source', start: 0, end: 2, label: 'From design to live page.' },
-  { id: 'scan', start: 2, end: 4, label: 'Scan the UI.' },
-  { id: 'generate', start: 4, end: 6, label: 'Generate exact coverage.' },
-  { id: 'fill', start: 6, end: 9, label: 'Fill realistic data.' },
-  { id: 'promise', start: 9, end: 12, label: 'Sharper first drafts.' },
-]
+  { id: "source", start: 0, end: 2, label: "From design to live page." },
+  { id: "scan", start: 2, end: 4, label: "Scan the UI." },
+  { id: "generate", start: 4, end: 6, label: "Generate exact coverage." },
+  { id: "fill", start: 6, end: 9, label: "Fill realistic data." },
+  { id: "promise", start: 9, end: 12, label: "Sharper first drafts." },
+];
 ```
 
 Implement `renderMarketingFrame({ time, width, height })` as a pure function. Use a 1920×1080 design coordinate system scaled uniformly into each requested canvas, with a centered safe area of 88% width and 82% height. Render the source beat as a tilted Figma checkout card; transition it into a deep-green TestPilot workspace; render scan, generate, and fill as distinct colored cards with the exact captions and UI details from the spec; render the promise beat as a deep-green end card with the TestPilot mark, “Sharper first drafts.”, and “AI-assisted manual QA.” Use SVG text and simple vector shapes only so the final frame stays crisp and static-poster-safe.
@@ -118,38 +161,59 @@ git commit -m "feat: add TestPilot marketing scene renderer"
 ### Task 2: Add deterministic media rendering CLI
 
 **Files:**
+
 - Create: `marketing/render.mjs`
 - Test: `marketing/render.test.mjs`
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Produces `parseArgs(argv)`, `renderPreset(presetName, options)`, and CLI entry behavior from `node marketing/render.mjs`.
 - `renderPreset()` accepts `{ presetName, outputDir, keepFrames = false, runCommand = defaultRunCommand }` and returns `{ presetName, outputPath, frameCount, width, height, fps, duration }`.
 
 - [ ] **Step 1: Write failing tests for CLI parsing and dry-run commands**
 
 ```js
-import { describe, expect, test } from 'vitest'
-import { parseArgs, buildEncodeCommands } from './render.mjs'
+import { describe, expect, test } from "vitest";
+import { parseArgs, buildEncodeCommands } from "./render.mjs";
 
-describe('marketing render CLI', () => {
-  test('defaults to all approved deliverables', () => {
-    expect(parseArgs([]).presets).toEqual(['master', 'gif', 'square', 'vertical'])
-  })
+describe("marketing render CLI", () => {
+  test("defaults to the master MP4 and GIF preview", () => {
+    expect(parseArgs([]).presets).toEqual(["master", "gif"]);
+  });
 
-  test('accepts a preset, output directory, and retained-frame flag', () => {
-    expect(parseArgs(['--preset', 'square', '--output-dir', '/tmp/out', '--keep-frames']))
-      .toMatchObject({ presets: ['square'], outputDir: '/tmp/out', keepFrames: true })
-  })
+  test("accepts a preset, output directory, and retained-frame flag", () => {
+    expect(
+      parseArgs([
+        "--preset",
+        "square",
+        "--output-dir",
+        "/tmp/out",
+        "--keep-frames",
+      ]),
+    ).toMatchObject({
+      presets: ["square"],
+      outputDir: "/tmp/out",
+      keepFrames: true,
+    });
+  });
 
-  test('builds the correct MP4 and GIF encoding commands', () => {
-    expect(buildEncodeCommands('master', { width: 1920, height: 1080, fps: 30 }, '/tmp/frames', '/tmp/out'))
-      .toEqual(expect.arrayContaining([
-        expect.arrayContaining(['ffmpeg', '-framerate', '30']),
-        expect.arrayContaining(['ffmpeg', '-framerate', '30', '-i']),
-      ]))
-  })
-})
+  test("builds the correct MP4 and GIF encoding commands", () => {
+    expect(
+      buildEncodeCommands(
+        "master",
+        { width: 1920, height: 1080, fps: 30 },
+        "/tmp/frames",
+        "/tmp/out",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.arrayContaining(["ffmpeg", "-framerate", "30"]),
+        expect.arrayContaining(["ffmpeg", "-framerate", "30", "-i"]),
+      ]),
+    );
+  });
+});
 ```
 
 - [ ] **Step 2: Run the focused tests and confirm they fail**
@@ -173,10 +237,11 @@ For each selected preset, create a temporary `<outputDir>/.frames/<preset>` dire
 
 ```text
 ffmpeg -y -framerate <fps> -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p -movflags +faststart <preset>.mp4
-ffmpeg -y -framerate <fps> -i frame-%04d.png -vf "fps=<fps>,scale=<width>:<height>:flags=lanczos" -loop 0 <preset>.gif
+ffmpeg -y -framerate <fps> -i frame-%04d.png -vf "fps=<fps>,scale=<width>:<height>:flags=lanczos,palettegen=max_colors=128:stats_mode=diff" palette.png
+ffmpeg -y -framerate <fps> -i frame-%04d.png -i palette.png -lavfi "fps=<fps>,scale=<width>:<height>:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle" -loop 0 <preset>.gif
 ```
 
-Use a GIF-specific output only for the `gif` preset; the square and vertical presets produce MP4 only. Check `command -v convert` and `command -v ffmpeg` before rendering and exit with the exact missing command name plus installation guidance. Clean the frame directory on success unless `--keep-frames` is set. Keep `runCommand` injectable so tests can inspect commands without invoking binaries.
+Use a GIF-specific output only for the `gif` preset; the square and vertical presets produce MP4 only. The default CLI render produces the master MP4 and GIF preview; explicit `--preset all` produces all four outputs. Check `command -v convert` and `command -v ffmpeg` before rendering and exit with the exact missing command name plus installation guidance. Clean the frame directory on success unless `--keep-frames` is set. Keep `runCommand` injectable so tests can inspect commands without invoking binaries.
 
 - [ ] **Step 4: Add package scripts**
 
@@ -207,6 +272,7 @@ git commit -m "feat: add marketing video render pipeline"
 ### Task 3: Document and render the approved deliverables
 
 **Files:**
+
 - Create: `marketing/README.md`
 - Create: `marketing/exports/testpilot-marketing-master.mp4`
 - Create: `marketing/exports/testpilot-marketing-preview.gif`
@@ -214,16 +280,17 @@ git commit -m "feat: add marketing video render pipeline"
 - Create: `marketing/exports/testpilot-marketing-vertical.mp4`
 
 **Interfaces:**
+
 - Consumes: `marketing/scene.mjs` and `marketing/render.mjs` from Tasks 1–2.
 - Produces: four user-facing media files plus repeatable local render instructions.
 
 - [ ] **Step 1: Write the usage documentation**
 
-Document prerequisites, default render command, individual preset commands, output dimensions, the five-beat timeline, and the safe way to revise copy/timing: edit `TIMELINE` or renderer scene data, run `npm run marketing:test`, then rerun `npm run marketing:render`.
+Document prerequisites, that the default render command produces the master MP4 and GIF preview, that explicit `--preset all` produces all four deliverables, individual preset commands, output dimensions, the five-beat timeline, and the safe way to revise copy/timing: edit `TIMELINE` or renderer scene data, run `npm run marketing:test`, then rerun `npm run marketing:render -- --preset all`.
 
 - [ ] **Step 2: Render all outputs**
 
-Run: `npm run marketing:render -- --output-dir marketing/exports`
+Run: `npm run marketing:render -- --preset all --output-dir marketing/exports`
 
 Expected: the command writes the four files listed above and prints their dimensions, duration, and output paths.
 
