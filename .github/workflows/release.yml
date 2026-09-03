@@ -1,0 +1,47 @@
+name: Release extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Validate built manifest
+        run: test -f dist/manifest.json && node -e "const fs = require('node:fs'); const manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8')); if (manifest.manifest_version !== 3 || typeof manifest.name !== 'string' || manifest.name.length === 0) throw new Error('dist/manifest.json is not a valid Manifest V3 extension manifest');"
+
+      - name: Package extension
+        run: cd dist && zip -r ../testpilot-chrome-extension.zip .
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: testpilot-chrome-extension.zip
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
