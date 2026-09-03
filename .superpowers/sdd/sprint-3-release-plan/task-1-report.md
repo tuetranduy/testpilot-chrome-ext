@@ -25,3 +25,11 @@ The workflow uses `actions/checkout@v4`, `actions/setup-node@v4` with npm cachin
 
 - GitHub-hosted runner availability and third-party action behavior cannot be exercised locally.
 - The existing unrelated lint warning remains; it does not originate from this task.
+
+## Fix round 1
+
+- Strengthened `release.workflow.test.ts` to assert the `softprops/action-gh-release@v2` action, its exact ZIP asset, Manifest V3 and non-empty name checks, and the required install → test → lint → build → manifest validation → package → publish ordering.
+- Removed the trailing whitespace flagged in the original contract test.
+- Red evidence: temporarily changed the workflow to validate Manifest V2 and publish `extension.zip`; the strengthened contract failed on the missing Manifest V3 assertion.
+- Green evidence: restored the workflow; `npm test -- release.workflow.test.ts` passed (`1` test, `1` passed).
+- `git diff --check` passed.
