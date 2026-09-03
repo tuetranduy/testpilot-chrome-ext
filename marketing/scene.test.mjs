@@ -30,4 +30,27 @@ describe('marketing scene', () => {
     expect(ending).toContain('Sharper first drafts.')
     expect(ending).toContain('TestPilot')
   })
+
+  test('stacks narrow headline, active card, and supporting elements inside the canvas', () => {
+    for (const height of [1080, 1920]) {
+      const frame = renderMarketingFrame({ time: 7.5, width: 1080, height })
+      expect(frame).toContain('data-layout="stacked"')
+
+      const sections = ['headline', 'active-card', 'supporting']
+      const positions = sections.map((section) => {
+        const match = frame.match(new RegExp(`data-section="${section}"[^>]*data-x="([\\d.]+)"[^>]*data-y="([\\d.]+)"[^>]*data-width="([\\d.]+)"[^>]*data-height="([\\d.]+)"`))
+        expect(match).not.toBeNull()
+        return match.slice(1).map(Number)
+      })
+
+      expect(positions[0][1]).toBeLessThan(positions[1][1])
+      expect(positions[1][1]).toBeLessThan(positions[2][1])
+      for (const [x, y, sectionWidth, sectionHeight] of positions) {
+        expect(x).toBeGreaterThanOrEqual(0)
+        expect(y).toBeGreaterThanOrEqual(0)
+        expect(x + sectionWidth).toBeLessThanOrEqual(1080)
+        expect(y + sectionHeight).toBeLessThanOrEqual(height)
+      }
+    }
+  })
 })

@@ -134,6 +134,85 @@ function endCard(entrance, narrow) {
   </g>`
 }
 
+function stackedWorkspace(entrance, beat, width, height, cardX, cardY, cardWidth, cardHeight) {
+  const slide = (1 - entrance) * 90
+  const innerX = cardX + 28
+  const innerWidth = cardWidth - 56
+  const navHeight = Math.min(92, cardHeight * 0.2)
+  const contentY = cardY + navHeight + 26
+  const contentHeight = cardHeight - navHeight - 54
+  const active = beat === 'generate' ? COLORS.mint : COLORS.orange
+  const caption = beat === 'scan' ? 'Scan the UI.' : beat === 'generate' ? 'Generate exact coverage.' : 'Fill realistic data.'
+  return `<g data-section="active-card" data-x="${number(cardX)}" data-y="${number(cardY)}" data-width="${number(cardWidth)}" data-height="${number(cardHeight)}" transform="translate(0 ${number(slide)})">
+    ${roundedRect(cardX, cardY, cardWidth, cardHeight, COLORS.green, 28)}
+    ${text('TestPilot', innerX, cardY + 42, 26, COLORS.mint, 700)}
+    ${text('Workspace', innerX + 150, cardY + 42, 20, '#b5c9bd', 500)}
+    ${text('Scan', cardX + cardWidth - 250, cardY + 42, 18, beat === 'scan' ? COLORS.mint : COLORS.white, 700)}
+    ${text('Generate', cardX + cardWidth - 155, cardY + 42, 18, beat === 'generate' ? COLORS.mint : COLORS.white, 700)}
+    ${text('Fill', cardX + cardWidth - 55, cardY + 42, 18, beat === 'fill' ? COLORS.mint : COLORS.white, 700, 'end')}
+    ${roundedRect(innerX, contentY, innerWidth, contentHeight, '#f9fbf7', 18)}
+    ${text('Checkout flow', innerX + 28, contentY + 42, 25, COLORS.green, 700)}
+    ${text(beat === 'generate' ? '10 of 10 scenarios' : beat === 'fill' ? 'Selected fields' : 'Ready to inspect', innerX + 28, contentY + 76, 17, COLORS.copy, 600)}
+    ${roundedRect(innerX + 24, contentY + 100, innerWidth - 48, 54, active, 12)}
+    ${text(caption, innerX + 48, contentY + 135, 20, COLORS.green, 700)}
+  </g>`
+}
+
+function stackedSource(entrance, cardX, cardY, cardWidth, cardHeight) {
+  const slide = (1 - entrance) * 90
+  return `<g data-section="active-card" data-x="${number(cardX)}" data-y="${number(cardY)}" data-width="${number(cardWidth)}" data-height="${number(cardHeight)}" transform="translate(0 ${number(slide)})">
+    ${roundedRect(cardX, cardY, cardWidth, cardHeight, COLORS.white, 28, `stroke="${COLORS.line}" stroke-width="3"`)}
+    ${text('figma / checkout', cardX + 28, cardY + 44, 20, COLORS.copy, 600)}
+    ${text('Checkout', cardX + 28, cardY + 108, 32, COLORS.green, 700)}
+    ${roundedRect(cardX + 28, cardY + 140, cardWidth * 0.55, cardHeight - 188, '#f8faf7', 16)}
+    ${roundedRect(cardX + cardWidth * 0.64, cardY + 140, cardWidth * 0.28, cardHeight - 230, COLORS.green, 16)}
+    ${text('$128.00', cardX + cardWidth * 0.68, cardY + 202, 30, COLORS.white, 700)}
+  </g>`
+}
+
+function stackedEnd(entrance, width, height, cardX, cardY, cardWidth, cardHeight) {
+  const slide = (1 - entrance) * 70
+  const center = width / 2
+  return `<g data-section="active-card" data-x="${number(cardX)}" data-y="${number(cardY)}" data-width="${number(cardWidth)}" data-height="${number(cardHeight)}" transform="translate(0 ${number(slide)})">
+    ${roundedRect(cardX, cardY, cardWidth, cardHeight, COLORS.green, 28)}
+    ${mark(center, cardY + cardHeight * 0.25, Math.min(70, cardWidth * 0.14))}
+    ${text('TestPilot', center, cardY + cardHeight * 0.43, 28, COLORS.mint, 700, 'middle')}
+    ${text('Sharper first drafts.', center, cardY + cardHeight * 0.62, Math.min(54, width * 0.06), COLORS.white, 700, 'middle')}
+    ${text('AI-assisted manual QA.', center, cardY + cardHeight * 0.76, 20, '#b5c9bd', 500, 'middle')}
+  </g>`
+}
+
+function renderStackedFrame({ currentTime, width, height, beat, entrance }) {
+  const padding = width * 0.08
+  const contentWidth = width - padding * 2
+  const headlineY = height * 0.12
+  const headlineHeight = height * 0.1
+  const cardY = height * 0.29
+  const cardHeight = Math.min(height * 0.39, 650)
+  const supportY = cardY + cardHeight + height * 0.08
+  const supportHeight = Math.min(height * 0.1, 120)
+  const center = width / 2
+  const headline = beat.label
+  let activeCard = ''
+  if (beat.id === 'source') activeCard = stackedSource(entrance, padding, cardY, contentWidth, cardHeight)
+  if (beat.id === 'scan' || beat.id === 'generate' || beat.id === 'fill') activeCard = stackedWorkspace(entrance, beat.id, width, height, padding, cardY, contentWidth, cardHeight)
+  if (beat.id === 'promise') activeCard = stackedEnd(entrance, width, height, padding, cardY, contentWidth, cardHeight)
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(headline)}" data-layout="stacked">
+  <rect width="${width}" height="${height}" fill="${COLORS.paper}"/>
+  <g data-section="headline" data-x="0" data-y="${number(headlineY - headlineHeight / 2)}" data-width="${width}" data-height="${number(headlineHeight)}">
+    ${text(headline, center, headlineY, Math.min(58, width * 0.055), COLORS.green, 700, 'middle')}
+  </g>
+  ${activeCard}
+  <g data-section="supporting" data-x="${number(padding)}" data-y="${number(supportY)}" data-width="${number(contentWidth)}" data-height="${number(supportHeight)}">
+    ${text('Scan', padding, supportY + 30, 18, beat.id === 'scan' ? COLORS.orange : COLORS.copy, 700)}
+    ${text('Generate', center, supportY + 30, 18, beat.id === 'generate' ? COLORS.orange : COLORS.copy, 700, 'middle')}
+    ${text('Fill', width - padding, supportY + 30, 18, beat.id === 'fill' ? COLORS.orange : COLORS.copy, 700, 'end')}
+    ${roundedRect(padding, supportY + 54, contentWidth, 8, '#dce6de', 4)}
+    ${roundedRect(padding, supportY + 54, contentWidth * clamp(currentTime / 12, 0, 1), 8, COLORS.orange, 4)}
+  </g>
+</svg>`
+}
+
 export function renderMarketingFrame({ time, width, height }) {
   const canvasWidth = Number(width)
   const canvasHeight = Number(height)
@@ -144,6 +223,7 @@ export function renderMarketingFrame({ time, width, height }) {
   const currentTime = clamp(Number(time) || 0, 0, TIMELINE.at(-1).end)
   const beat = TIMELINE.find((item) => currentTime >= item.start && currentTime < item.end) ?? TIMELINE.at(-1)
   const narrow = canvasWidth / canvasHeight < 1.35
+  if (narrow) return renderStackedFrame({ currentTime, width: canvasWidth, height: canvasHeight, beat, entrance: progressFor(currentTime, beat.start, beat.end) })
   const scale = Math.min(canvasWidth / DESIGN_WIDTH, canvasHeight / DESIGN_HEIGHT)
   const offsetX = (canvasWidth - DESIGN_WIDTH * scale) / 2
   const offsetY = (canvasHeight - DESIGN_HEIGHT * scale) / 2
