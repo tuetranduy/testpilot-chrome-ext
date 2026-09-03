@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-marketing-site>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="motion.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#article">Skip to article</a>
@@ -57,42 +58,42 @@
 
       <section class="signal-band" aria-label="Product promise">
         <div class="shell signal-grid">
-          <div><strong>Less tab switching.</strong><span>Keep context beside the product.</span></div>
-          <div><strong>More useful coverage.</strong><span>Start from the UI and the requirement.</span></div>
-          <div><strong>Human in control.</strong><span>Review, edit, export, and decide.</span></div>
+          <div data-reveal><strong>Less tab switching.</strong><span>Keep context beside the product.</span></div>
+          <div data-reveal><strong>More useful coverage.</strong><span>Start from the UI and the requirement.</span></div>
+          <div data-reveal><strong>Human in control.</strong><span>Review, edit, export, and decide.</span></div>
         </div>
       </section>
 
       <article id="article" class="article shell">
-        <div class="article-intro">
+        <div class="article-intro" data-reveal>
           <p class="eyebrow">A better starting point for QA</p>
           <h2>Manual testing is thoughtful work. The setup around it should not be.</h2>
           <p>QA teams already know how to find the edge cases that matter. The drag is everything around that judgment: cataloguing fields, translating acceptance criteria, inventing safe test data, and keeping yesterday's results close enough to be useful.</p>
           <p>TestPilot is a Chrome extension built to shorten that distance. It works from the live implementation or a Figma Design, so QA can begin before or after the UI reaches the browser.</p>
         </div>
 
-        <div id="how-it-works" class="section-heading"><span class="section-number">01</span><h2>From live UI to testable plan</h2></div>
+        <div id="how-it-works" class="section-heading" data-reveal><span class="section-number">01</span><h2>From live UI to testable plan</h2></div>
         <div class="feature-grid">
-          <section class="feature-card feature-scan"><span class="feature-index">01 / SCAN</span><h3>Start from web or design.</h3><p>Inspect the current page's interactive DOM and screenshot, or import a Figma page, frame, section, or component with a rendered preview and compact design structure.</p><div class="element-stack"><span>Web · input · email</span><span>Figma · Checkout frame</span><span>Figma · Button component</span></div></section>
-          <section class="feature-card feature-tests"><span class="feature-index">02 / GENERATE</span><h3>Ask for an exact suite.</h3><p>Choose 5, 10, 15, or 20 test cases—or enter any count from 1 to 50. Generate plain steps or Gherkin, with deduplication and progress across batches.</p><div class="case-preview"><span>✓</span><div><b>10 of 10 scenarios</b><small>Review · Markdown · CSV · .feature</small></div></div></section>
-          <section class="feature-card feature-fill"><span class="feature-index">03 / FILL</span><h3>Fill only what matters.</h3><p>Generate realistic web-form data that respects field constraints. Open the field checklist, select all, clear it, or fill only the values needed for this test.</p><div class="data-lines"><span><i></i> ✓ Email address</span><span><i></i> ✓ Shipping country</span><span><i></i> ○ Telephone</span></div></section>
+          <section class="feature-card feature-scan" data-reveal><span class="feature-index">01 / SCAN</span><h3>Start from web or design.</h3><p>Inspect the current page's interactive DOM and screenshot, or import a Figma page, frame, section, or component with a rendered preview and compact design structure.</p><div class="element-stack"><span>Web · input · email</span><span>Figma · Checkout frame</span><span>Figma · Button component</span></div></section>
+          <section class="feature-card feature-tests" data-reveal><span class="feature-index">02 / GENERATE</span><h3>Ask for an exact suite.</h3><p>Choose 5, 10, 15, or 20 test cases—or enter any count from 1 to 50. Generate plain steps or Gherkin, with deduplication and progress across batches.</p><div class="case-preview"><span>✓</span><div><b>10 of 10 scenarios</b><small>Review · Markdown · CSV · .feature</small></div></div></section>
+          <section class="feature-card feature-fill" data-reveal><span class="feature-index">03 / FILL</span><h3>Fill only what matters.</h3><p>Generate realistic web-form data that respects field constraints. Open the field checklist, select all, clear it, or fill only the values needed for this test.</p><div class="data-lines"><span><i></i> ✓ Email address</span><span><i></i> ✓ Shipping country</span><span><i></i> ○ Telephone</span></div></section>
         </div>
 
         <section class="editorial-block">
-          <div class="pull-quote">“The goal is not to replace the tester. It is to give the tester a sharper first draft.”</div>
-          <div><p>AI is useful when it handles the blank page and stays open to correction. That is the role TestPilot is designed for: gather the raw material, suggest coverage, and leave the final call with the person who understands the product.</p><p>Generated cases can be reviewed and exported to Markdown, CSV, or one combined Gherkin <code>.feature</code> file. Source-aware local history keeps web and Figma runs ready to revisit.</p></div>
+          <div class="pull-quote" data-reveal="left">“The goal is not to replace the tester. It is to give the tester a sharper first draft.”</div>
+          <div data-reveal><p>AI is useful when it handles the blank page and stays open to correction. That is the role TestPilot is designed for: gather the raw material, suggest coverage, and leave the final call with the person who understands the product.</p><p>Generated cases can be reviewed and exported to Markdown, CSV, or one combined Gherkin <code>.feature</code> file. Source-aware local history keeps web and Figma runs ready to revisit.</p></div>
         </section>
 
-        <div class="section-heading"><span class="section-number">02</span><h2>Built for control, not surprise</h2></div>
+        <div class="section-heading" data-reveal><span class="section-number">02</span><h2>Built for control, not surprise</h2></div>
         <section class="privacy-panel">
-          <div><span class="privacy-icon" aria-hidden="true">⌁</span><h3>Your credentials stay local.</h3><p>AI provider keys and the masked Figma personal access token are stored in <code>chrome.storage.local</code> and never synced. Replace the Figma token in Settings if it expires.</p></div>
-          <div><span class="privacy-icon" aria-hidden="true">⌖</span><h3>Access is exact and timely.</h3><p>TestPilot requests only the current web origin, Figma API, returned preview origin, or AI provider origin when that connection is needed.</p></div>
-          <div><span class="privacy-icon" aria-hidden="true">↗</span><h3>Results remain portable.</h3><p>Review generated cases, then export Markdown, CSV, or a combined UTF-8 <code>.feature</code> file for the tools your team already uses.</p></div>
+          <div data-reveal><span class="privacy-icon" aria-hidden="true">⌁</span><h3>Your credentials stay local.</h3><p>AI provider keys and the masked Figma personal access token are stored in <code>chrome.storage.local</code> and never synced. Replace the Figma token in Settings if it expires.</p></div>
+          <div data-reveal><span class="privacy-icon" aria-hidden="true">⌖</span><h3>Access is exact and timely.</h3><p>TestPilot requests only the current web origin, Figma API, returned preview origin, or AI provider origin when that connection is needed.</p></div>
+          <div data-reveal><span class="privacy-icon" aria-hidden="true">↗</span><h3>Results remain portable.</h3><p>Review generated cases, then export Markdown, CSV, or a combined UTF-8 <code>.feature</code> file for the tools your team already uses.</p></div>
         </section>
 
         <section class="getting-started">
-          <div><p class="eyebrow">Start in a few minutes</p><h2>Bring TestPilot to your next test session.</h2><p>TestPilot is open source and currently loaded unpacked in Chrome. Build it locally, configure your preferred provider, and try it on a web page or Figma Design.</p></div>
-          <div class="steps"><div><span>1</span><p>Clone the repository and run <code>npm install</code>.</p></div><div><span>2</span><p>Build with <code>npm run build</code>.</p></div><div><span>3</span><p>Load <code>dist/</code> from <code>chrome://extensions</code>.</p></div></div>
+          <div data-reveal="left"><p class="eyebrow">Start in a few minutes</p><h2>Bring TestPilot to your next test session.</h2><p>TestPilot is open source and currently loaded unpacked in Chrome. Build it locally, configure your preferred provider, and try it on a web page or Figma Design.</p></div>
+          <div class="steps" data-reveal><div><span>1</span><p>Clone the repository and run <code>npm install</code>.</p></div><div><span>2</span><p>Build with <code>npm run build</code>.</p></div><div><span>3</span><p>Load <code>dist/</code> from <code>chrome://extensions</code>.</p></div></div>
         </section>
       </article>
     </main>
