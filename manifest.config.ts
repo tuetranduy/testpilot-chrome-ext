@@ -33,7 +33,7 @@ export default defineManifest({
     side_panel: {
         default_path: 'src/sidepanel/index.html',
     },
-    permissions: ['storage', 'sidePanel', 'scripting', 'activeTab', 'tabs'],
+    permissions: ['storage', 'unlimitedStorage', 'sidePanel', 'scripting', 'activeTab', 'tabs'],
     // Exact web, Figma API, preview, and provider origins are requested at
     // runtime rather than granted upfront.
     optional_host_permissions: ['*://*/*'],

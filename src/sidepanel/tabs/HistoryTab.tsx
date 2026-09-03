@@ -53,7 +53,7 @@ export function HistoryTab() {
     <div className="flex flex-col gap-3.5">
       <div className="px-1">
         <SectionTitle icon="history">Saved runs</SectionTitle>
-        <p className="mt-1 text-xs leading-5 text-muted">Review test cases saved locally for web pages and Figma designs.</p>
+        <p className="mt-1 text-xs leading-5 text-muted">Review test cases saved locally for web pages, Figma designs, and image scans.</p>
       </div>
       {error ? (
         <InlineMessage tone="error">
@@ -75,10 +75,10 @@ export function HistoryTab() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-semibold text-text">{record.locator.label}</p>
-                  <p className="mt-0.5 truncate font-mono text-[10px] text-muted">{record.locator.url}</p>
+                  <p className="mt-0.5 truncate font-mono text-[10px] text-muted">{record.locator.source === 'image' ? `${record.lastScan?.images.length ?? 0} uploaded images` : record.locator.url}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <Badge>{record.locator.source === 'figma' ? 'Figma design' : 'Web page'}</Badge>
+                  <Badge>{record.locator.source === 'figma' ? 'Figma design' : record.locator.source === 'image' ? 'Images' : 'Web page'}</Badge>
                   <span className="text-[10px] text-subtle">{record.testCases.length} test cases</span>
                 </div>
               </div>

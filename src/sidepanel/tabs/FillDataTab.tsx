@@ -107,8 +107,8 @@ export function FillDataTab({ tab, settings, siteRecord, onUpdate }: Props) {
         <p className="mt-1.5 text-xs leading-5 text-muted">Generate realistic values, review them, then choose several fields or fill one field at a time.</p>
         {!siteRecord.lastScan ? (
           <div className="mt-3"><EmptyState icon="scan" title="No page scan" description="Scan the current page first to discover its form fields." /></div>
-        ) : siteRecord.lastScan.source === 'figma' ? (
-          <div className="mt-3"><EmptyState icon="fill" title="Live page required" description="Fill Data is available only for live web-page scans. Figma designs can be used to generate test cases." /></div>
+        ) : siteRecord.lastScan.source !== 'web' ? (
+          <div className="mt-3"><EmptyState icon="fill" title="Live page required" description="Fill Data is available only for live web-page scans. Designs and uploaded images can be used to generate test cases." /></div>
         ) : formFields.length === 0 ? (
           <div className="mt-3"><EmptyState icon="fill" title="No form fields found" description="The latest scan did not detect visible inputs, textareas, or selects." /></div>
         ) : (

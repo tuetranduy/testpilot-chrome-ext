@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { hasOriginAccess, originPatternFor } from '../lib/permissions'
 import { emptyRunRecord, getRunRecord, getSettings, saveRunRecord, saveSettings } from '../lib/storage'
 import { getActiveTab } from '../lib/tabActions'
-import type { RunLocator, RunRecord, Settings } from '../lib/types'
+import type { ImageScanResult, RunLocator, RunRecord, Settings } from '../lib/types'
 import { Badge, BrandMark, Button, Icon, InlineMessage, type IconName } from './components/ui'
 import { FillDataTab } from './tabs/FillDataTab'
 import { HistoryTab } from './tabs/HistoryTab'
@@ -79,9 +79,15 @@ export default function App() {
     try {
       const record = await getRunRecord(locator)
       setSiteRecord(record ?? emptyRunRecord(locator))
+      return true
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Could not load the selected run.')
+      return false
     }
+  }
+
+  function createRun(locator: RunLocator, scan: ImageScanResult) {
+    persist({ ...emptyRunRecord(locator), lastScan: scan })
   }
 
   function retrySave() {
@@ -123,9 +129,9 @@ export default function App() {
             <Icon name="globe" className="h-4 w-4 shrink-0 text-subtle" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-medium text-text">{siteRecord?.locator.label ?? new URL(tab.url).hostname}</p>
-              <p className="truncate text-[10px] text-subtle">{siteRecord?.locator.source === 'figma' ? 'Figma design' : new URL(tab.url).pathname || '/'}</p>
+              <p className="truncate text-[10px] text-subtle">{siteRecord?.locator.source === 'figma' ? 'Figma design' : siteRecord?.locator.source === 'image' ? 'Uploaded images' : new URL(tab.url).pathname || '/'}</p>
             </div>
-            <Badge tone={siteRecord?.locator.source === 'figma' || granted ? 'success' : 'muted'}>{siteRecord?.locator.source === 'figma' ? 'Figma' : granted ? 'Access granted' : 'No access yet'}</Badge>
+            <Badge tone={siteRecord?.locator.source !== 'web' || granted ? 'success' : 'muted'}>{siteRecord?.locator.source === 'figma' ? 'Figma' : siteRecord?.locator.source === 'image' ? 'Images' : granted ? 'Access granted' : 'No access yet'}</Badge>
           </div>
         ) : (
           <p className="mt-3 rounded-xl border border-border bg-surface p-2.5 text-xs text-muted" role="status">{loadError ?? 'Loading active tab…'}</p>
@@ -185,7 +191,7 @@ export default function App() {
                 </InlineMessage>
               </div>
             )}
-            <ScanTab key={siteRecord.locator.source} tab={tab} granted={granted} setGranted={setGranted} settings={settings} siteRecord={siteRecord} onUpdate={persist} onSelectRun={selectRun} />
+            <ScanTab key={siteRecord.locator.source} tab={tab} granted={granted} setGranted={setGranted} settings={settings} siteRecord={siteRecord} onUpdate={persist} onSelectRun={selectRun} onCreateRun={createRun} />
           </>
         ) : activeTabId === 'fill' ? (
           <>

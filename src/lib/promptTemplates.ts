@@ -38,6 +38,10 @@ function summarizeFigmaNodes(scan: Extract<ScanResult, { source: 'figma' }>) {
     return JSON.stringify(scan.nodes.filter((node) => node.visible), null, 2)
 }
 
+function summarizeImages(scan: ScanResult) {
+    return JSON.stringify(scan.images.map(({ name, mimeType, width, height, role }) => ({ name, mimeType, width, height, role })), null, 2)
+}
+
 export function buildTestCasePrompt(
     scan: ScanResult,
     requirementsText: string,
@@ -45,14 +49,15 @@ export function buildTestCasePrompt(
     requestedCount: number,
     excludedTitles: string[] = [],
 ) {
-    const sourceDescription = scan.source === 'figma' ? 'an imported Figma design' : 'a scanned live web page'
+    const sourceDescription = scan.source === 'figma' ? 'an imported Figma design' : scan.source === 'image' ? 'uploaded UI images' : 'a scanned live web page'
     const system = `You are a senior QA engineer writing manual test cases from ${sourceDescription} and optional requirements/acceptance criteria. Respond ONLY with strict JSON matching this TypeScript type — no markdown fences, no commentary:\n\n${TEST_CASE_SCHEMA}`
     const formatNote =
         format === 'gherkin'
             ? 'Populate "gherkin" with a full Given/When/Then scenario for each case; "steps" and "expectedResult" may be brief summaries.'
             : 'Populate "steps" as short imperative steps and "expectedResult" as one sentence; leave "gherkin" null.'
-    const sourceLabel = scan.source === 'figma' ? 'Figma design nodes' : 'Web page elements'
-    const sourceJson = scan.source === 'figma' ? summarizeFigmaNodes(scan) : summarizeElements(scan.elements)
+    const sourceLabel = scan.source === 'figma' ? 'Figma design nodes and image metadata' : scan.source === 'image' ? 'Uploaded UI image metadata' : 'Web page elements and image metadata'
+    const structuralJson = scan.source === 'figma' ? summarizeFigmaNodes(scan) : scan.source === 'web' ? summarizeElements(scan.elements) : '[]'
+    const sourceJson = `${structuralJson}\n\nImages (JSON):\n${summarizeImages(scan)}`
     const exclusions = excludedTitles.length > 0
         ? `\n\nDo not repeat these previously generated test-case titles or equivalent scenarios:\n${excludedTitles.map((title) => `- ${title}`).join('\n')}`
         : ''

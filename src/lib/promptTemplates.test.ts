@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { buildTestCasePrompt } from './promptTemplates'
-import type { FigmaScanResult, WebScanResult } from './types'
+import type { FigmaScanResult, ImageScanResult, WebScanResult } from './types'
 
 const webScan: WebScanResult = {
     source: 'web',
     url: 'https://example.com/checkout',
     title: 'Checkout',
     scannedAt: 1,
-    screenshotDataUrl: null,
+    images: [],
     elements: [{ id: 'email', tag: 'input', role: null, label: 'Email', type: 'email', name: 'email', placeholder: null, required: true, pattern: null, maxLength: null, options: null, text: null, selector: '#email', visible: true }],
 }
 
@@ -22,7 +22,7 @@ const figmaScan: FigmaScanResult = {
     nodeId: '1:2',
     nodeName: 'Desktop',
     nodes: [{ id: '1:3', name: 'Pay now', type: 'TEXT', text: 'Pay now', visible: true, componentId: null, interactionTriggers: [], layoutMode: null, width: 100, height: 20 }],
-    screenshotDataUrl: null,
+    images: [],
     previewWarning: null,
 }
 
@@ -39,5 +39,21 @@ describe('buildTestCasePrompt', () => {
         expect(prompt.system).toContain('Figma design')
         expect(prompt.user).toContain('Figma design nodes')
         expect(prompt.user).toContain('Pay now')
+    })
+
+    it('describes an image batch and its ordered image metadata', () => {
+        const imageScan: ImageScanResult = {
+            source: 'image', title: 'Checkout.png + 1 more', scannedAt: 1,
+            images: [
+                { id: 'one', name: 'Checkout.png', mimeType: 'image/webp', width: 1440, height: 900, dataUrl: 'data:image/webp;base64,one', role: 'upload' },
+                { id: 'two', name: 'Error.png', mimeType: 'image/webp', width: 800, height: 1200, dataUrl: 'data:image/webp;base64,two', role: 'upload' },
+            ],
+        }
+        const prompt = buildTestCasePrompt(imageScan, '', 'plain', 5)
+
+        expect(prompt.system).toContain('uploaded UI images')
+        expect(prompt.user).toContain('Checkout.png')
+        expect(prompt.user).toContain('1440')
+        expect(prompt.user).toContain('Error.png')
     })
 })

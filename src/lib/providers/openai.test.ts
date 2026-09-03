@@ -34,6 +34,19 @@ describe('openaiAdapter', () => {
         )
         await expect(openaiAdapter.chat([{ role: 'user', content: 'Hi' }], config)).rejects.toThrow(ProviderError)
     })
+
+    it('keeps multiple images in their supplied order', async () => {
+        const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ choices: [{ message: { content: 'ok' } }] }) })
+        vi.stubGlobal('fetch', fetchMock)
+
+        await openaiAdapter.chat([{ role: 'user', content: 'Review' }], config, { images: ['data:image/webp;base64,one', 'data:image/webp;base64,two'] })
+
+        const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+        expect(body.messages[0].content.slice(1)).toEqual([
+            { type: 'image_url', image_url: { url: 'data:image/webp;base64,one' } },
+            { type: 'image_url', image_url: { url: 'data:image/webp;base64,two' } },
+        ])
+    })
 })
 
 describe('localAdapter', () => {

@@ -121,7 +121,7 @@ describe('Figma API', () => {
 
         expect(scan.source).toBe('figma')
         expect(scan.nodes.some((node) => node.text === 'Pay now')).toBe(true)
-        expect(scan.screenshotDataUrl).toBeNull()
+        expect(scan.images).toEqual([])
         expect(scan.previewWarning).toMatch(/preview/i)
     })
 })

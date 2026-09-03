@@ -19,7 +19,7 @@ if (!previewGlobal.chrome?.tabs?.query || !previewGlobal.chrome?.storage?.local)
         url: 'https://example.com/checkout',
         title: 'Checkout',
         scannedAt: Date.now(),
-        screenshotDataUrl: null,
+        images: [],
         elements: [
           { id: 'email', tag: 'input', role: null, label: 'Email address', type: 'email', name: 'email', placeholder: 'you@example.com', required: true, pattern: null, maxLength: null, options: null, text: null, selector: '#email', visible: true },
           { id: 'country', tag: 'select', role: null, label: 'Country', type: null, name: 'country', placeholder: null, required: true, pattern: null, maxLength: null, options: ['Vietnam', 'Singapore'], text: null, selector: '#country', visible: true },

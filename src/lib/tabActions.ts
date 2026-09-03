@@ -40,7 +40,7 @@ export async function scanActiveTab(tab: chrome.tabs.Tab): Promise<ScanResult> {
         title: tab.title ?? tab.url!,
         scannedAt: Date.now(),
         elements,
-        screenshotDataUrl,
+        images: screenshotDataUrl ? [{ id: `viewport-${Date.now()}`, name: 'Page viewport', mimeType: 'image/jpeg', width: 0, height: 0, dataUrl: screenshotDataUrl, role: 'viewport' }] : [],
     }
 }
 

@@ -51,4 +51,8 @@ describe('extension icon assets', () => {
       expect(readPngCornerAlpha(`public/icons/icon-${size}.png`)).toBe(0)
     }
   })
+
+  it('allows persisted image scans without the storage quota', () => {
+    expect(manifest.permissions).toContain('unlimitedStorage')
+  })
 })

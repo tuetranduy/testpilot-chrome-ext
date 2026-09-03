@@ -203,7 +203,7 @@ export async function scanFigmaTarget(options: {
         nodeId: options.target.id,
         nodeName: options.target.name,
         nodes: summarizeFigmaNodes(root),
-        screenshotDataUrl,
+        images: screenshotDataUrl ? [{ id: `figma-preview-${options.target.id}`, name: `${options.target.name} preview`, mimeType: /^data:([^;,]+)/.exec(screenshotDataUrl)?.[1] ?? 'image/png', width: 0, height: 0, dataUrl: screenshotDataUrl, role: 'figma-preview' }] : [],
         previewWarning,
     }
 }

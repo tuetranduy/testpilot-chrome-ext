@@ -17,13 +17,25 @@ export interface ElementSummary {
     visible: boolean
 }
 
+export type ScanImageRole = 'viewport' | 'full-page' | 'figma-preview' | 'upload'
+
+export interface ScanImage {
+    id: string
+    name: string
+    mimeType: string
+    width: number
+    height: number
+    dataUrl: string
+    role: ScanImageRole
+}
+
 export interface WebScanResult {
     source: 'web'
     url: string
     title: string
     scannedAt: number
     elements: ElementSummary[]
-    screenshotDataUrl: string | null
+    images: ScanImage[]
 }
 
 export interface FigmaNodeSummary {
@@ -50,11 +62,18 @@ export interface FigmaScanResult {
     nodeId: string
     nodeName: string
     nodes: FigmaNodeSummary[]
-    screenshotDataUrl: string | null
+    images: ScanImage[]
     previewWarning: string | null
 }
 
-export type ScanResult = WebScanResult | FigmaScanResult
+export interface ImageScanResult {
+    source: 'image'
+    title: string
+    scannedAt: number
+    images: ScanImage[]
+}
+
+export type ScanResult = WebScanResult | FigmaScanResult | ImageScanResult
 
 export interface WebRunLocator {
     source: 'web'
@@ -72,7 +91,13 @@ export interface FigmaRunLocator {
     label: string
 }
 
-export type RunLocator = WebRunLocator | FigmaRunLocator
+export interface ImageRunLocator {
+    source: 'image'
+    runId: string
+    label: string
+}
+
+export type RunLocator = WebRunLocator | FigmaRunLocator | ImageRunLocator
 
 export type TestCaseFormat = 'plain' | 'gherkin'
 

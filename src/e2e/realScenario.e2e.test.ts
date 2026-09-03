@@ -49,7 +49,7 @@ describe('real scenario: raynatours.com + local LM Studio (openai/gpt-oss-20b)',
             url: TARGET_URL,
             title: 'Rayna Tours',
             scannedAt: Date.now(),
-            screenshotDataUrl: null,
+            images: [],
             elements: promptElements(elements),
         }
         const { system, user } = buildTestCasePrompt(

@@ -21,7 +21,7 @@ const siteRecord: RunRecord = {
     url: 'https://example.com/checkout',
     title: 'Checkout',
     scannedAt: 1,
-    screenshotDataUrl: null,
+    images: [],
     elements: [
       { id: 'email', tag: 'input', role: null, label: 'Email address', type: 'email', name: 'email', placeholder: null, required: true, pattern: null, maxLength: null, options: null, text: null, selector: '#email', visible: true },
       { id: 'country', tag: 'input', role: null, label: 'Country', type: 'text', name: 'country', placeholder: null, required: true, pattern: null, maxLength: null, options: null, text: null, selector: '#country', visible: true },
@@ -131,7 +131,7 @@ describe('FillDataTab', () => {
       locator: { source: 'figma', fileKey: 'ABC', nodeId: '1:2', url: 'https://www.figma.com/design/ABC/App', label: 'Checkout' },
       lastScan: {
         source: 'figma', url: 'https://www.figma.com/design/ABC/App', title: 'App — Checkout', scannedAt: 1,
-        fileKey: 'ABC', pageId: '0:1', pageName: 'Page', nodeId: '1:2', nodeName: 'Checkout', nodes: [], screenshotDataUrl: null, previewWarning: null,
+        fileKey: 'ABC', pageId: '0:1', pageName: 'Page', nodeId: '1:2', nodeName: 'Checkout', nodes: [], images: [], previewWarning: null,
       },
     }
     render(<FillDataTab tab={{ id: 1 } as chrome.tabs.Tab} settings={DEFAULT_SETTINGS} siteRecord={figmaRecord} onUpdate={vi.fn()} />)

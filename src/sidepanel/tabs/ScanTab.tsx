@@ -7,7 +7,8 @@ import { chatWithProvider, ensureProviderAccess } from '../../lib/providers'
 import { parseTestCasesResponse } from '../../lib/aiJson'
 import { scanActiveTab } from '../../lib/tabActions'
 import { generateTestCaseSuite } from '../../lib/testCaseGeneration'
-import type { RunLocator, RunRecord, Settings, TestCaseFormat, WebRunLocator } from '../../lib/types'
+import { imageRunLabel, MAX_SCAN_IMAGES, normalizeImageFiles } from '../../lib/images'
+import type { ImageScanResult, RunLocator, RunRecord, ScanImage, Settings, TestCaseFormat, WebRunLocator } from '../../lib/types'
 import { Badge, Button, Card, EmptyState, Icon, InlineMessage, SectionTitle, Spinner, fieldClassName } from '../components/ui'
 
 interface Props {
@@ -17,7 +18,8 @@ interface Props {
   settings: Settings
   siteRecord: RunRecord
   onUpdate: (next: RunRecord) => void
-  onSelectRun: (locator: RunLocator) => void | Promise<void>
+  onSelectRun: (locator: RunLocator) => boolean | void | Promise<boolean | void>
+  onCreateRun: (locator: RunLocator, scan: ImageScanResult) => void
 }
 
 function downloadFile(filename: string, content: string, mimeType: string) {
@@ -50,8 +52,8 @@ async function ensureOrigin(originPattern: string): Promise<boolean> {
   return (await hasOriginAccess(originPattern)) || requestOriginAccess(originPattern)
 }
 
-export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpdate, onSelectRun }: Props) {
-  const [source, setSource] = useState<'web' | 'figma'>(siteRecord.locator.source)
+export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpdate, onSelectRun, onCreateRun }: Props) {
+  const [source, setSource] = useState<RunLocator['source']>(siteRecord.locator.source)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -65,6 +67,8 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   const [selectedTargetId, setSelectedTargetId] = useState('')
   const [loadingFigma, setLoadingFigma] = useState(false)
   const [switchingRun, setSwitchingRun] = useState(false)
+  const [processingImages, setProcessingImages] = useState(false)
+  const [pendingFullPage, setPendingFullPage] = useState<ScanImage | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const scan = siteRecord.lastScan?.source === source ? siteRecord.lastScan : null
@@ -72,14 +76,31 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   const customCountValid = Number.isInteger(parsedCustomCount) && parsedCustomCount >= 1 && parsedCustomCount <= 50
   const requestedCount = countMode === 'custom' ? parsedCustomCount : countMode
   const canDownloadFeature = siteRecord.testCases.length > 0 && siteRecord.testCases.every((testCase) => Boolean(testCase.gherkin?.trim()))
+  const hasUsableScan = Boolean(scan && (scan.source !== 'image' || scan.images.length > 0))
+  const displayedImages = scan
+    ? pendingFullPage && scan.source === 'web' ? [...scan.images.filter((image) => image.role !== 'full-page'), pendingFullPage] : scan.images
+    : pendingFullPage ? [pendingFullPage] : []
 
-  async function selectSource(next: 'web' | 'figma') {
+  async function selectSource(next: RunLocator['source']) {
+    const previousSource = source
     setSource(next)
     setScanError(null)
-    if (next === 'web') await onSelectRun(webLocator(tab))
+    if (next === 'web') {
+      setSwitchingRun(true)
+      try {
+        const selected = await onSelectRun(webLocator(tab))
+        if (selected === false) setSource(previousSource)
+      } catch (error) {
+        setSource(previousSource)
+        setScanError(error instanceof Error ? error.message : 'Could not load the selected run.')
+      } finally {
+        setSwitchingRun(false)
+      }
+    }
   }
 
   async function handleWebScan() {
+    if (switchingRun || processingImages) return
     setScanError(null)
     setScanning(true)
     try {
@@ -89,11 +110,61 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
         if (!grantedNow) throw new Error('Permission denied for this site.')
       }
       const result = await scanActiveTab(tab)
+      if (pendingFullPage) result.images = [...result.images.filter((image) => image.role !== 'full-page'), pendingFullPage]
       onUpdate({ ...siteRecord, locator: webLocator(tab), lastScan: result })
     } catch (error) {
       setScanError(error instanceof Error ? error.message : 'Scan failed.')
     } finally {
       setScanning(false)
+    }
+  }
+
+  async function handleImageUpload(files: File[]) {
+    if (files.length === 0) return
+    setScanError(null)
+    setProcessingImages(true)
+    try {
+      const current = scan?.source === 'image' ? scan.images : []
+      const added = await normalizeImageFiles(files, 'upload', current.length)
+      const images = [...current, ...added]
+      const title = imageRunLabel(images.map((image) => image.name))
+      if (siteRecord.locator.source === 'image' && scan?.source === 'image') {
+        onUpdate({ ...siteRecord, locator: { ...siteRecord.locator, label: title }, lastScan: { ...scan, title, images } })
+      } else {
+        const runId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+        onCreateRun({ source: 'image', runId, label: title }, { source: 'image', title, scannedAt: Date.now(), images })
+      }
+    } catch (error) {
+      setScanError(error instanceof Error ? error.message : 'Could not process these images.')
+    } finally {
+      setProcessingImages(false)
+    }
+  }
+
+  async function handleFullPageUpload(file: File) {
+    setScanError(null)
+    setProcessingImages(true)
+    try {
+      const [image] = await normalizeImageFiles([file], 'full-page')
+      setPendingFullPage(image)
+      if (scan?.source === 'web') onUpdate({ ...siteRecord, lastScan: { ...scan, images: [...scan.images.filter((item) => item.role !== 'full-page'), image] } })
+    } catch (error) {
+      setScanError(error instanceof Error ? error.message : 'Could not process the full-page screenshot.')
+    } finally {
+      setProcessingImages(false)
+    }
+  }
+
+  function removeImage(imageId: string) {
+    if (pendingFullPage?.id === imageId) setPendingFullPage(null)
+    if (!scan) return
+    const images = scan.images.filter((image) => image.id !== imageId)
+    if (scan.source === 'image' && siteRecord.locator.source === 'image') {
+      const title = imageRunLabel(images.map((image) => image.name))
+      onUpdate({ ...siteRecord, locator: { ...siteRecord.locator, label: title }, lastScan: { ...scan, title, images } })
+    } else {
+      if (scan.images.find((image) => image.id === imageId)?.role === 'full-page') setPendingFullPage(null)
+      onUpdate({ ...siteRecord, lastScan: { ...scan, images } })
     }
   }
 
@@ -171,7 +242,7 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   }
 
   async function handleGenerate() {
-    if (!scan || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50) return
+    if (!scan || !hasUsableScan || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50) return
     setGenError(null)
     setGenerating(true)
     setGenerationProgress(0)
@@ -186,7 +257,7 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
           settings.activeProvider,
           config,
           [{ role: 'system', content: system }, { role: 'user', content: user }],
-          { images: scan.screenshotDataUrl ? [scan.screenshotDataUrl] : undefined },
+          { images: scan.images.length > 0 ? scan.images.map((image) => image.dataUrl) : undefined },
         )
         return parseTestCasesResponse(text)
       }, (completed) => setGenerationProgress(completed))
@@ -214,12 +285,12 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
       <Card>
         <div className="flex items-center justify-between gap-3">
           <SectionTitle icon="scan">Source scan</SectionTitle>
-          {scan && <Badge tone="success">{scan.source === 'web' ? `${scan.elements.length} elements` : `${scan.nodes.length} nodes`}</Badge>}
+          {scan && <Badge tone="success">{scan.source === 'web' ? `${scan.elements.length} elements` : scan.source === 'figma' ? `${scan.nodes.length} nodes` : `${scan.images.length} images`}</Badge>}
         </div>
-        <div aria-label="Scan source" role="group" className="mt-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-bg/60 p-1">
-          {(['web', 'figma'] as const).map((item) => (
-            <button key={item} type="button" aria-pressed={source === item} onClick={() => void selectSource(item)} className={`min-h-9 cursor-pointer rounded-md px-2 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${source === item ? 'bg-surface-raised text-cta-soft shadow-sm' : 'text-muted hover:bg-surface-hover'}`}>
-              {item === 'web' ? 'Web page' : 'Figma'}
+        <div aria-label="Scan source" role="group" className="mt-3 grid grid-cols-3 gap-1 rounded-lg border border-border bg-bg/60 p-1">
+          {(['web', 'figma', 'image'] as const).map((item) => (
+            <button key={item} type="button" disabled={scanning || processingImages || switchingRun} aria-pressed={source === item} onClick={() => void selectSource(item)} className={`min-h-9 cursor-pointer rounded-md px-2 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${source === item ? 'bg-surface-raised text-cta-soft shadow-sm' : 'text-muted hover:bg-surface-hover'}`}>
+              {item === 'web' ? 'Web page' : item === 'figma' ? 'Figma' : 'Images'}
             </button>
           ))}
         </div>
@@ -227,11 +298,16 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
         {source === 'web' ? (
           <>
             <p className="mt-2 text-xs leading-5 text-muted">Capture interactive elements and a visual snapshot of the current page.</p>
-            <Button onClick={handleWebScan} disabled={scanning} className="mt-3 w-full">
+            <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-border-strong bg-bg/35 px-3 py-2.5 text-xs text-muted hover:bg-surface-hover">
+              <span><span className="block font-semibold text-text">Full-page screenshot</span><span className="mt-0.5 block text-[10px]">Optional PNG, JPEG, or WebP</span></span>
+              <Icon name="upload" />
+              <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Attach full-page screenshot" className="hidden" disabled={processingImages || scanning || switchingRun} onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleFullPageUpload(file); event.target.value = '' }} />
+            </label>
+            <Button onClick={handleWebScan} disabled={scanning || processingImages || switchingRun} className="mt-3 w-full">
               {scanning ? <><Spinner /> Scanning…</> : <><Icon name="scan" /> Scan current page</>}
             </Button>
           </>
-        ) : (
+        ) : source === 'figma' ? (
           <div className="mt-3 flex flex-col gap-2.5">
             <label htmlFor="figma-url" className="text-[11px] font-semibold text-muted">Figma Design URL</label>
             <input id="figma-url" type="url" value={figmaUrl} onChange={(event) => setFigmaUrl(event.target.value)} placeholder="https://www.figma.com/design/…" className={fieldClassName} />
@@ -254,15 +330,28 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
               </>
             )}
           </div>
+        ) : (
+          <div className="mt-3 flex flex-col gap-2.5">
+            <p className="text-xs leading-5 text-muted">Upload up to {MAX_SCAN_IMAGES} related UI screenshots to generate one test suite.</p>
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong bg-bg/35 px-3 py-4 text-xs font-semibold text-text hover:bg-surface-hover">
+              {processingImages ? <><Spinner /> Processing images…</> : <><Icon name="upload" /> Choose images</>}
+              <input type="file" multiple accept="image/png,image/jpeg,image/webp" aria-label="Upload scan images" className="hidden" disabled={processingImages || (scan?.source === 'image' && scan.images.length >= MAX_SCAN_IMAGES)} onChange={(event) => { void handleImageUpload(Array.from(event.target.files ?? [])); event.target.value = '' }} />
+            </label>
+          </div>
         )}
 
         {scanError && <div className="mt-3"><InlineMessage tone="error">{scanError}</InlineMessage></div>}
         {scan?.source === 'figma' && scan.previewWarning && <div className="mt-3"><InlineMessage>{scan.previewWarning}</InlineMessage></div>}
-        {scan?.screenshotDataUrl && (
-          <figure className="mt-3 overflow-hidden rounded-xl border border-border bg-bg">
-            <img src={scan.screenshotDataUrl} alt={scan.source === 'figma' ? 'Figma design preview' : 'Page screenshot preview'} className="max-h-44 w-full object-cover object-top" />
-            <figcaption className="flex items-center gap-2 border-t border-border px-3 py-2 text-[11px] text-muted"><Icon name="image" className="h-3.5 w-3.5" /> Latest {scan.source === 'figma' ? 'design' : 'page'} snapshot</figcaption>
-          </figure>
+        {displayedImages.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {displayedImages.map((image) => (
+              <figure key={image.id} className="relative overflow-hidden rounded-xl border border-border bg-bg">
+                <img src={image.dataUrl} alt={`${image.name} preview`} className="h-28 w-full object-cover object-top" />
+                <figcaption className="truncate border-t border-border px-2 py-1.5 pr-8 text-[10px] text-muted">{image.name}</figcaption>
+                {((scan?.source === 'image') || image.role === 'full-page') && <Button variant="ghost" size="icon" aria-label={`Remove ${image.name}`} onClick={() => removeImage(image.id)} className="absolute bottom-0 right-0 h-7 w-7"><Icon name="trash" className="h-3 w-3" /></Button>}
+              </figure>
+            ))}
+          </div>
         )}
       </Card>
 
@@ -302,10 +391,10 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
           </div>
         )}
 
-        <Button onClick={handleGenerate} disabled={!scan || generating || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50} className="mt-3 w-full">
+        <Button onClick={handleGenerate} disabled={!hasUsableScan || generating || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50} className="mt-3 w-full">
           {generating ? <><Spinner /> Generating {generationProgress} of {requestedCount}…</> : <><Icon name="sparkles" /> Generate test cases</>}
         </Button>
-        {!scan && <div className="mt-3"><InlineMessage>Scan the selected {source === 'figma' ? 'Figma design' : 'web page'} before generating test cases.</InlineMessage></div>}
+        {!hasUsableScan && <div className="mt-3"><InlineMessage>{source === 'image' ? 'Upload one or more images' : `Scan the selected ${source === 'figma' ? 'Figma design' : 'web page'}`} before generating test cases.</InlineMessage></div>}
         {genError && <div className="mt-3"><InlineMessage tone="error">{genError}</InlineMessage></div>}
 
         {siteRecord.testCases.length > 0 && (
@@ -336,7 +425,7 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
             </ul>
           </>
         )}
-        {scan && siteRecord.testCases.length === 0 && !generating && <div className="mt-3"><EmptyState icon="file" title="No test cases yet" description="Generate a set when your scan and requirements are ready." /></div>}
+        {hasUsableScan && siteRecord.testCases.length === 0 && !generating && <div className="mt-3"><EmptyState icon="file" title="No test cases yet" description="Generate a set when your scan and requirements are ready." /></div>}
       </Card>
     </div>
   )

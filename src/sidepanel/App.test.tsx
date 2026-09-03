@@ -19,6 +19,7 @@ const appMocks = vi.hoisted(() => ({
   listRunRecords: vi.fn(),
   deleteRunRecord: vi.fn(),
   getActiveTab: vi.fn(),
+  normalizeImageFiles: vi.fn(),
 }))
 
 vi.mock('../lib/tabActions', () => ({
@@ -41,6 +42,12 @@ vi.mock('../lib/storage', () => ({
   deleteRunRecord: appMocks.deleteRunRecord,
 }))
 
+vi.mock('../lib/images', () => ({
+  MAX_SCAN_IMAGES: 5,
+  imageRunLabel: (names: string[]) => names[0] ?? 'Image scan',
+  normalizeImageFiles: appMocks.normalizeImageFiles,
+}))
+
 describe('side panel navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -55,6 +62,7 @@ describe('side panel navigation', () => {
     appMocks.saveRunRecord.mockResolvedValue(undefined)
     appMocks.listRunRecords.mockResolvedValue([])
     appMocks.deleteRunRecord.mockResolvedValue(undefined)
+    appMocks.normalizeImageFiles.mockResolvedValue([{ id: 'image-1', name: 'Checkout.png', mimeType: 'image/webp', width: 1200, height: 800, dataUrl: 'data:image/webp;base64,image', role: 'upload' }])
   })
 
   it('shows the TestPilot brand mark in the header', async () => {
@@ -124,5 +132,18 @@ describe('side panel navigation', () => {
 
     await waitFor(() => expect(screen.queryByText(/quota exceeded/i)).toBeNull())
     expect(appMocks.saveRunRecord).toHaveBeenCalledTimes(2)
+  })
+
+  it('creates and persists a fresh image run without copying the web run', async () => {
+    render(<App />)
+    await screen.findByRole('button', { name: 'Images' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Images' }))
+    fireEvent.change(screen.getByLabelText('Upload scan images'), { target: { files: [new File(['image'], 'Checkout.png', { type: 'image/png' })] } })
+
+    await waitFor(() => expect(appMocks.saveRunRecord).toHaveBeenCalledWith(expect.objectContaining({
+      locator: expect.objectContaining({ source: 'image' }),
+      requirementsText: '',
+    })))
   })
 })

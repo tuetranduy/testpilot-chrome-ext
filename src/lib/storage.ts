@@ -4,18 +4,32 @@ import { DEFAULT_SETTINGS, type RunLocator, type RunRecord, type ScanResult, typ
 const SETTINGS_KEY = 'settings'
 const WEB_PREFIX = 'site:'
 const FIGMA_PREFIX = 'figma:'
+const IMAGE_PREFIX = 'image:'
 
 export function runKey(locator: RunLocator): string {
-    return locator.source === 'web'
-        ? `${WEB_PREFIX}${locator.origin}${locator.pathname}`
-        : `${FIGMA_PREFIX}${locator.fileKey}:${locator.nodeId}`
+    if (locator.source === 'web') return `${WEB_PREFIX}${locator.origin}${locator.pathname}`
+    if (locator.source === 'figma') return `${FIGMA_PREFIX}${locator.fileKey}:${locator.nodeId}`
+    return `${IMAGE_PREFIX}${locator.runId}`
 }
 
 function normalizeScan(value: unknown): ScanResult | null {
     if (!value || typeof value !== 'object') return null
     const scan = value as Record<string, unknown>
-    if (scan.source === 'figma') return scan as unknown as ScanResult
-    return { ...scan, source: 'web' } as unknown as ScanResult
+    const source = scan.source === 'figma' || scan.source === 'image' ? scan.source : 'web'
+    const existingImages = Array.isArray(scan.images) ? scan.images : []
+    const legacyScreenshot = typeof scan.screenshotDataUrl === 'string' ? scan.screenshotDataUrl : null
+    const legacyRole = source === 'figma' ? 'figma-preview' : 'viewport'
+    const images = existingImages.length > 0 || !legacyScreenshot ? existingImages : [{
+        id: `legacy-${source}`,
+        name: source === 'figma' ? 'Figma preview' : 'Page viewport',
+        mimeType: /^data:([^;,]+)/.exec(legacyScreenshot)?.[1] ?? 'image/jpeg',
+        width: 0,
+        height: 0,
+        dataUrl: legacyScreenshot,
+        role: legacyRole,
+    }]
+    const { screenshotDataUrl: _legacy, ...rest } = scan
+    return { ...rest, source, images } as unknown as ScanResult
 }
 
 export function normalizeStoredRun(value: unknown): RunRecord | null {
@@ -80,7 +94,7 @@ export async function deleteRunRecord(locator: RunLocator): Promise<void> {
 export async function listRunRecords(): Promise<RunRecord[]> {
     const all = await chrome.storage.local.get(null)
     return Object.entries(all)
-        .filter(([key]) => key.startsWith(WEB_PREFIX) || key.startsWith(FIGMA_PREFIX))
+        .filter(([key]) => key.startsWith(WEB_PREFIX) || key.startsWith(FIGMA_PREFIX) || key.startsWith(IMAGE_PREFIX))
         .flatMap(([, value]) => {
             const record = normalizeStoredRun(value)
             return record ? [record] : []
