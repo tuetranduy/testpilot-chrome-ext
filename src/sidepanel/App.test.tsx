@@ -146,4 +146,56 @@ describe('side panel navigation', () => {
       requirementsText: '',
     })))
   })
+
+  it('opens Settings from an image model compatibility warning', async () => {
+    appMocks.getSettings.mockResolvedValue({ ...DEFAULT_SETTINGS, activeProvider: 'local' })
+    appMocks.getRunRecord.mockResolvedValue({
+      locator: { source: 'image', runId: 'screens', label: 'Checkout.png' },
+      updatedAt: 1,
+      requirementsText: '',
+      testCases: [],
+      fieldValues: {},
+      lastScan: {
+        source: 'image',
+        title: 'Checkout.png',
+        scannedAt: 1,
+        images: [{ id: 'image-1', name: 'Checkout.png', mimeType: 'image/webp', width: 1200, height: 800, dataUrl: 'data:image/webp;base64,image', role: 'upload' }],
+      },
+    })
+    render(<App />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /choose vision model/i }))
+
+    expect(screen.getByRole('tab', { name: /settings/i }).getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeTruthy()
+  })
+
+  it('does not activate an unsaved vision override when settings persistence fails', async () => {
+    appMocks.getSettings.mockResolvedValue({ ...DEFAULT_SETTINGS, activeProvider: 'local' })
+    appMocks.getRunRecord.mockResolvedValue({
+      locator: { source: 'image', runId: 'screens', label: 'Checkout.png' },
+      updatedAt: 1,
+      requirementsText: '',
+      testCases: [],
+      fieldValues: {},
+      lastScan: {
+        source: 'image',
+        title: 'Checkout.png',
+        scannedAt: 1,
+        images: [{ id: 'image-1', name: 'Checkout.png', mimeType: 'image/webp', width: 1200, height: 800, dataUrl: 'data:image/webp;base64,image', role: 'upload' }],
+      },
+    })
+    appMocks.saveSettings.mockRejectedValueOnce(new Error('Storage unavailable'))
+    render(<App />)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /settings/i }))
+    fireEvent.change(screen.getByLabelText('Local LLM model'), { target: { value: 'llava' } })
+    fireEvent.click(screen.getByLabelText('This model accepts image input for Local LLM'))
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
+    expect((await screen.findByRole('alert')).textContent).toContain('Storage unavailable')
+
+    fireEvent.click(screen.getByRole('tab', { name: /scan/i }))
+    expect(screen.getByText(/vision support for llama3 is unknown/i)).toBeTruthy()
+    expect((screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement).disabled).toBe(true)
+  })
 })

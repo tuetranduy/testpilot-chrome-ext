@@ -118,6 +118,10 @@ export interface ProviderConfig {
     apiKey: string
     model: string
     baseUrl: string // used by 'local'; ignored by hosted providers
+    visionOverride?: {
+        model: string
+        supported: boolean
+    }
 }
 
 export interface Settings {

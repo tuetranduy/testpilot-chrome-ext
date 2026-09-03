@@ -8,6 +8,7 @@ import { parseTestCasesResponse } from '../../lib/aiJson'
 import { scanActiveTab } from '../../lib/tabActions'
 import { generateTestCaseSuite } from '../../lib/testCaseGeneration'
 import { imageRunLabel, MAX_SCAN_IMAGES, normalizeImageFiles } from '../../lib/images'
+import { getVisionCapability } from '../../lib/modelCapabilities'
 import type { ImageScanResult, RunLocator, RunRecord, ScanImage, Settings, TestCaseFormat, WebRunLocator } from '../../lib/types'
 import { Badge, Button, Card, EmptyState, Icon, InlineMessage, SectionTitle, Spinner, fieldClassName } from '../components/ui'
 
@@ -20,6 +21,7 @@ interface Props {
   onUpdate: (next: RunRecord) => void
   onSelectRun: (locator: RunLocator) => boolean | void | Promise<boolean | void>
   onCreateRun: (locator: RunLocator, scan: ImageScanResult) => void
+  onOpenSettings: () => void
 }
 
 function downloadFile(filename: string, content: string, mimeType: string) {
@@ -52,7 +54,7 @@ async function ensureOrigin(originPattern: string): Promise<boolean> {
   return (await hasOriginAccess(originPattern)) || requestOriginAccess(originPattern)
 }
 
-export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpdate, onSelectRun, onCreateRun }: Props) {
+export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpdate, onSelectRun, onCreateRun, onOpenSettings }: Props) {
   const [source, setSource] = useState<RunLocator['source']>(siteRecord.locator.source)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
@@ -77,6 +79,10 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   const requestedCount = countMode === 'custom' ? parsedCustomCount : countMode
   const canDownloadFeature = siteRecord.testCases.length > 0 && siteRecord.testCases.every((testCase) => Boolean(testCase.gherkin?.trim()))
   const hasUsableScan = Boolean(scan && (scan.source !== 'image' || scan.images.length > 0))
+  const activeConfig = settings.providers[settings.activeProvider]
+  const visionCapability = getVisionCapability(settings.activeProvider, activeConfig)
+  const requiresVision = Boolean(scan && scan.images.length > 0)
+  const visionBlocked = requiresVision && visionCapability !== 'vision'
   const displayedImages = scan
     ? pendingFullPage && scan.source === 'web' ? [...scan.images.filter((image) => image.role !== 'full-page'), pendingFullPage] : scan.images
     : pendingFullPage ? [pendingFullPage] : []
@@ -242,7 +248,7 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   }
 
   async function handleGenerate() {
-    if (!scan || !hasUsableScan || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50) return
+    if (!scan || !hasUsableScan || visionBlocked || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50) return
     setGenError(null)
     setGenerating(true)
     setGenerationProgress(0)
@@ -391,10 +397,20 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
           </div>
         )}
 
-        <Button onClick={handleGenerate} disabled={!hasUsableScan || generating || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50} className="mt-3 w-full">
+        <Button onClick={handleGenerate} disabled={!hasUsableScan || visionBlocked || generating || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50} className="mt-3 w-full">
           {generating ? <><Spinner /> Generating {generationProgress} of {requestedCount}…</> : <><Icon name="sparkles" /> Generate test cases</>}
         </Button>
         {!hasUsableScan && <div className="mt-3"><InlineMessage>{source === 'image' ? 'Upload one or more images' : `Scan the selected ${source === 'figma' ? 'Figma design' : 'web page'}`} before generating test cases.</InlineMessage></div>}
+        {visionBlocked && (
+          <div className="mt-3">
+            <InlineMessage>
+              <p>{visionCapability === 'text'
+                ? `${activeConfig.model} is text-only. Choose a vision-capable model to use attached images.`
+                : `Vision support for ${activeConfig.model} is unknown. Confirm it in Settings or choose a vision-capable model.`}</p>
+              <Button variant="secondary" size="small" className="mt-2" onClick={onOpenSettings}>Choose vision model</Button>
+            </InlineMessage>
+          </div>
+        )}
         {genError && <div className="mt-3"><InlineMessage tone="error">{genError}</InlineMessage></div>}
 
         {siteRecord.testCases.length > 0 && (

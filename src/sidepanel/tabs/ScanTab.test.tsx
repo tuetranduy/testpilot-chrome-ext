@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_SETTINGS, type RunRecord, type TestCase } from '../../lib/types'
+import { DEFAULT_SETTINGS, type RunRecord, type Settings, type TestCase } from '../../lib/types'
 import { ScanTab } from './ScanTab'
 
 const mocks = vi.hoisted(() => ({
@@ -39,10 +39,10 @@ const webRecord: RunRecord = {
   },
 }
 
-function renderTab(record = webRecord, onUpdate = vi.fn(), onSelectRun = vi.fn().mockResolvedValue(undefined), onCreateRun = vi.fn()) {
+function renderTab(record = webRecord, onUpdate = vi.fn(), onSelectRun = vi.fn().mockResolvedValue(undefined), onCreateRun = vi.fn(), settings: Settings = DEFAULT_SETTINGS, onOpenSettings = vi.fn()) {
   const tab = { id: 1, windowId: 1, url: 'https://example.com/checkout', title: 'Checkout' } as chrome.tabs.Tab
-  render(<ScanTab tab={tab} granted settings={DEFAULT_SETTINGS} siteRecord={record} setGranted={vi.fn()} onUpdate={onUpdate} onSelectRun={onSelectRun} onCreateRun={onCreateRun} />)
-  return { onUpdate, onSelectRun, onCreateRun }
+  render(<ScanTab tab={tab} granted settings={settings} siteRecord={record} setGranted={vi.fn()} onUpdate={onUpdate} onSelectRun={onSelectRun} onCreateRun={onCreateRun} onOpenSettings={onOpenSettings} />)
+  return { onUpdate, onSelectRun, onCreateRun, onOpenSettings }
 }
 
 function cases(count: number, gherkin: string | null = null): string {
@@ -188,6 +188,40 @@ describe('ScanTab', () => {
 
     await waitFor(() => expect(mocks.chatWithProvider).toHaveBeenCalled())
     expect(mocks.chatWithProvider.mock.calls[0][3].images).toEqual([uploadedImage.dataUrl, fullPageImage.dataUrl])
+  })
+
+  it('blocks image-backed generation when model vision support is unknown', () => {
+    const settings: Settings = { ...DEFAULT_SETTINGS, activeProvider: 'local' }
+    const onOpenSettings = vi.fn()
+    renderTab({ ...webRecord, lastScan: { ...webRecord.lastScan!, images: [fullPageImage] } }, vi.fn(), vi.fn(), vi.fn(), settings, onOpenSettings)
+
+    expect((screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/vision support for .* is unknown/i)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /choose vision model/i }))
+    expect(onOpenSettings).toHaveBeenCalledOnce()
+  })
+
+  it('blocks image-backed generation for a known text-only model', () => {
+    const settings: Settings = {
+      ...DEFAULT_SETTINGS,
+      providers: { ...DEFAULT_SETTINGS.providers, openai: { ...DEFAULT_SETTINGS.providers.openai, model: 'gpt-3.5-turbo' } },
+    }
+    renderTab({ ...webRecord, lastScan: { ...webRecord.lastScan!, images: [fullPageImage] } }, vi.fn(), vi.fn(), vi.fn(), settings)
+
+    expect((screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/gpt-3\.5-turbo is text-only/i)).toBeTruthy()
+  })
+
+  it('allows structured-only generation when model vision support is unknown', async () => {
+    const settings: Settings = { ...DEFAULT_SETTINGS, activeProvider: 'local' }
+    mocks.chatWithProvider.mockResolvedValue(cases(5))
+    renderTab(webRecord, vi.fn(), vi.fn(), vi.fn(), settings)
+
+    const generate = screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement
+    expect(generate.disabled).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: '5 test cases' }))
+    fireEvent.click(generate)
+    await waitFor(() => expect(mocks.chatWithProvider).toHaveBeenCalled())
   })
 
   it('does not generate an image run after its last image is removed', () => {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { chatWithProvider, ensureProviderAccess, listModels } from '../../lib/providers'
+import { getVisionCapability, visionCapabilityLabel } from '../../lib/modelCapabilities'
 import type { ProviderId, Settings } from '../../lib/types'
 import { Badge, Button, Card, Icon, InlineMessage, SectionTitle, Spinner, fieldClassName } from '../components/ui'
 
@@ -30,6 +31,10 @@ export function SettingsTab({ settings, onSave }: Props) {
 
   function updateProvider(id: ProviderId, patch: Partial<Settings['providers'][ProviderId]>) {
     setDraft((d) => ({ ...d, providers: { ...d.providers, [id]: { ...d.providers[id], ...patch } } }))
+  }
+
+  function updateModel(id: ProviderId, model: string) {
+    updateProvider(id, { model, visionOverride: undefined })
   }
 
   async function testProvider(id: ProviderId) {
@@ -97,8 +102,12 @@ export function SettingsTab({ settings, onSave }: Props) {
         </select>
       </Card>
 
-      {(Object.keys(PROVIDER_LABELS) as ProviderId[]).map((id) => (
-        <Card key={id} className={draft.activeProvider === id ? 'border-cta/30' : ''}>
+      {(Object.keys(PROVIDER_LABELS) as ProviderId[]).map((id) => {
+        const config = draft.providers[id]
+        const capability = getVisionCapability(id, config)
+        const capabilityLabel = visionCapabilityLabel(capability)
+
+        return <Card key={id} className={draft.activeProvider === id ? 'border-cta/30' : ''}>
           <div className="flex items-center justify-between gap-3">
             <SectionTitle icon={id === 'local' ? 'server' : 'globe'}>{PROVIDER_LABELS[id]}</SectionTitle>
             {testStatus[id] === 'ok' && <Badge tone="success">Connected</Badge>}
@@ -121,36 +130,57 @@ export function SettingsTab({ settings, onSave }: Props) {
               </label>
             )}
             {modelOptions[id] && modelOptions[id]!.length > 0 ? (
-              <label className="flex flex-col gap-1.5 text-[11px] font-semibold text-muted">
-                {PROVIDER_LABELS[id]} model
+              <div className="flex flex-col gap-1.5 text-[11px] font-semibold text-muted">
+                <div className="flex items-center justify-between gap-2">
+                  <label htmlFor={`model-${id}`}>{PROVIDER_LABELS[id]} model</label>
+                  <span className="font-medium text-muted">{capabilityLabel}</span>
+                </div>
                 <select
-                  value={modelOptions[id]!.includes(draft.providers[id].model) ? draft.providers[id].model : CUSTOM_MODEL_VALUE}
+                  id={`model-${id}`}
+                  value={modelOptions[id]!.includes(config.model) ? config.model : CUSTOM_MODEL_VALUE}
                   onChange={(e) => {
                     if (e.target.value === CUSTOM_MODEL_VALUE) {
                       setModelOptions((o) => ({ ...o, [id]: [] }))
                       return
                     }
-                    updateProvider(id, { model: e.target.value })
+                    updateModel(id, e.target.value)
                   }}
                   className={`${fieldClassName} cursor-pointer`}
                 >
                   {modelOptions[id]!.map((m) => (
                     <option key={m} value={m}>
-                      {m}
+                      {m} — {visionCapabilityLabel(getVisionCapability(id, { ...config, model: m, visionOverride: undefined }))}
                     </option>
                   ))}
                   <option value={CUSTOM_MODEL_VALUE}>Custom (type manually)…</option>
                 </select>
-              </label>
+              </div>
             ) : (
-              <label className="flex flex-col gap-1.5 text-[11px] font-semibold text-muted">
-                {PROVIDER_LABELS[id]} model
+              <div className="flex flex-col gap-1.5 text-[11px] font-semibold text-muted">
+                <div className="flex items-center justify-between gap-2">
+                  <label htmlFor={`model-${id}`}>{PROVIDER_LABELS[id]} model</label>
+                  <span className="font-medium text-muted">{capabilityLabel}</span>
+                </div>
                 <input
+                  id={`model-${id}`}
                   placeholder="Model"
-                  value={draft.providers[id].model}
-                  onChange={(e) => updateProvider(id, { model: e.target.value })}
+                  value={config.model}
+                  onChange={(e) => updateModel(id, e.target.value)}
                   className={fieldClassName}
                 />
+              </div>
+            )}
+            {capability === 'unknown' && (
+              <label className="flex items-center gap-2 text-[11px] font-medium text-muted">
+                <input
+                  type="checkbox"
+                  aria-label={`This model accepts image input for ${PROVIDER_LABELS[id]}`}
+                  checked={config.visionOverride?.model === config.model && config.visionOverride.supported}
+                  onChange={(event) => updateProvider(id, {
+                    visionOverride: event.target.checked ? { model: config.model, supported: true } : undefined,
+                  })}
+                />
+                This model accepts image input
               </label>
             )}
             <Button variant="ghost" size="small" onClick={() => fetchModels(id)} disabled={modelStatus[id] === 'loading'} className="-ml-2 self-start">
@@ -175,7 +205,7 @@ export function SettingsTab({ settings, onSave }: Props) {
           </Button>
           {testStatus[id] === 'error' && testError[id] && <div className="mt-3"><InlineMessage tone="error">{testError[id]}</InlineMessage></div>}
         </Card>
-      ))}
+      })}
 
       <Card>
         <SectionTitle icon="file">Figma connection</SectionTitle>

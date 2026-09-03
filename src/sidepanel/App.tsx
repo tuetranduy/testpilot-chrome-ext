@@ -96,8 +96,8 @@ export default function App() {
   }
 
   async function persistSettings(next: Settings) {
-    setSettings(next)
     await saveSettings(next)
+    setSettings(next)
   }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) {
@@ -191,7 +191,7 @@ export default function App() {
                 </InlineMessage>
               </div>
             )}
-            <ScanTab key={siteRecord.locator.source} tab={tab} granted={granted} setGranted={setGranted} settings={settings} siteRecord={siteRecord} onUpdate={persist} onSelectRun={selectRun} onCreateRun={createRun} />
+            <ScanTab key={siteRecord.locator.source} tab={tab} granted={granted} setGranted={setGranted} settings={settings} siteRecord={siteRecord} onUpdate={persist} onSelectRun={selectRun} onCreateRun={createRun} onOpenSettings={() => setActiveTabId('settings')} />
           </>
         ) : activeTabId === 'fill' ? (
           <>
