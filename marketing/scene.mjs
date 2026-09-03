@@ -4,6 +4,9 @@ const SAFE_WIDTH = DESIGN_WIDTH * 0.88
 const SAFE_HEIGHT = DESIGN_HEIGHT * 0.82
 const SAFE_X = (DESIGN_WIDTH - SAFE_WIDTH) / 2
 const SAFE_Y = (DESIGN_HEIGHT - SAFE_HEIGHT) / 2
+const HANDOFF_START = 1.7
+const HANDOFF_END = 2.3
+const FIELD_ROWS = ['Email address', 'Shipping address', 'Payment details']
 
 const COLORS = {
   paper: '#f5f7f2',
@@ -68,18 +71,29 @@ function progressFor(time, start, end) {
   return easeOut(clamp((time - start) / Math.min(0.7, end - start), 0, 1))
 }
 
+function scenarioCountFor(time) {
+  return Math.min(10, Math.floor(clamp((time - 4) / 2, 0, 1) * 10 + 1e-9) + 1)
+}
+
+function handoffProgressFor(time) {
+  return clamp((time - HANDOFF_START) / (HANDOFF_END - HANDOFF_START), 0, 1)
+}
+
 function mark(x, y, size, fill = COLORS.mint) {
   const half = size / 2
   return `<g transform="translate(${number(x)} ${number(y)})" fill="${fill}"><path d="M0 ${number(-half)}c${number(half * 0.8)} 0 ${number(half)} ${number(half * 0.2)} ${number(half)} ${number(half)} 0 ${number(half * 0.8)}-${number(half * 0.2)} ${number(half)}-${number(half)} ${number(half)}-${number(half * 0.8)} 0-${number(half)}-${number(0.2 * half)}-${number(half)}-${number(half)}z"/><circle cx="0" cy="0" r="${number(size * 0.12)}" fill="${COLORS.green}"/></g>`
 }
 
-function sourceCard(entrance, narrow) {
+function sourceCard(entrance, narrow, { opacity = 1, handoff = 0 } = {}) {
   const width = narrow ? 1050 : 920
   const height = narrow ? 560 : 620
-  const x = narrow ? (DESIGN_WIDTH - width) / 2 : 760
-  const y = narrow ? 430 : 245
-  const slide = (1 - entrance) * (narrow ? 180 : 130)
-  return `<g transform="translate(${number(slide)} 0)">
+  const baseX = narrow ? (DESIGN_WIDTH - width) / 2 : 760
+  const baseY = narrow ? 430 : 245
+  const offsetX = (1 - entrance) * (narrow ? 180 : 130) - handoff * 90
+  const offsetY = handoff * 12
+  const x = baseX + offsetX
+  const y = baseY + offsetY
+  return `<g data-scene="source" data-tilt="-2" opacity="${number(opacity)}" transform="skewY(-2)">
     ${roundedRect(x, y, width, height, COLORS.white, 32, `stroke="${COLORS.line}" stroke-width="3"`)}
     ${roundedRect(x, y, width, 70, '#eef2ed', 32)}
     <circle cx="${number(x + 34)}" cy="${number(y + 35)}" r="8" fill="${COLORS.orange}"/><circle cx="${number(x + 62)}" cy="${number(y + 35)}" r="8" fill="#f5c75f"/><circle cx="${number(x + 90)}" cy="${number(y + 35)}" r="8" fill="#67c58b"/>
@@ -97,14 +111,15 @@ function sourceCard(entrance, narrow) {
   </g>`
 }
 
-function workspace(entrance, beat, narrow) {
+function workspace(entrance, beat, narrow, currentTime, opacity = 1) {
   const width = narrow ? 1080 : 1420
   const height = narrow ? 610 : 650
   const x = (DESIGN_WIDTH - width) / 2
   const y = narrow ? 380 : 285
   const offset = (1 - entrance) * 180
   const active = beat === 'scan' ? COLORS.orange : beat === 'generate' ? COLORS.mint : COLORS.orange
-  return `<g transform="translate(${number(offset)} 0)">
+  const scenarioCount = scenarioCountFor(currentTime)
+  return `<g data-scene="workspace" opacity="${number(opacity)}" transform="translate(${number(offset)} 0)">
     ${roundedRect(x, y, width, height, COLORS.green, 30)}
     ${text('TestPilot', x + 42, y + 62, 28, COLORS.mint, 700)}
     ${text('Workspace', x + 190, y + 62, 22, '#b5c9bd', 500)}
@@ -115,10 +130,10 @@ function workspace(entrance, beat, narrow) {
     ${text('Fill', x + 70, y + 308, 25, beat === 'fill' ? COLORS.mint : COLORS.white, 700)}
     ${roundedRect(x + 314, y + 95, width - 352, height - 132, '#f9fbf7', 18)}
     ${text('Checkout flow', x + 362, y + 155, 30, COLORS.green, 700)}
-    ${text(beat === 'generate' ? '10 of 10 scenarios' : beat === 'fill' ? 'Selected fields' : 'Ready to inspect', x + 362, y + 198, 20, COLORS.copy, 600)}
+    ${text(beat === 'generate' ? `${scenarioCount} of 10 scenarios` : beat === 'fill' ? 'Selected fields' : 'Ready to inspect', x + 362, y + 198, 20, COLORS.copy, 600)}
     ${roundedRect(x + 362, y + 240, width - 450, 64, active, 14)}
     ${text(beat === 'scan' ? 'Scan the UI.' : beat === 'generate' ? 'Generate exact coverage.' : 'Fill realistic data.', x + 395, y + 282, 23, COLORS.green, 700)}
-    ${[0, 1, 2].map((row) => `<g>${roundedRect(x + 362, y + 340 + row * 58, width - 450, 38, row < (beat === 'fill' ? 2 : 3) ? '#edf5ee' : '#f5f7f2', 10)}${row < (beat === 'fill' ? 2 : 3) ? `<circle cx="${number(x + 388)}" cy="${number(y + 359 + row * 58)}" r="10" fill="${COLORS.orange}"/>${text('✓', x + 388, y + 366 + row * 58, 15, COLORS.white, 700, 'middle')}` : ''}${text(['Email address', 'Shipping address', 'Payment details'][row], x + 416, y + 366 + row * 58, 18, COLORS.copy, 600)}</g>`).join('')}
+    ${[0, 1, 2].map((row) => `<g>${roundedRect(x + 362, y + 340 + row * 58, width - 450, 38, row < (beat === 'fill' ? 2 : 3) ? '#edf5ee' : '#f5f7f2', 10)}${row < (beat === 'fill' ? 2 : 3) ? `<circle cx="${number(x + 388)}" cy="${number(y + 359 + row * 58)}" r="10" fill="${COLORS.orange}"/>${text('✓', x + 388, y + 366 + row * 58, 15, COLORS.white, 700, 'middle')}` : ''}${text(FIELD_ROWS[row], x + 416, y + 366 + row * 58, 18, COLORS.copy, 600)}</g>`).join('')}
   </g>`
 }
 
@@ -134,7 +149,7 @@ function endCard(entrance, narrow) {
   </g>`
 }
 
-function stackedWorkspace(entrance, beat, width, height, cardX, cardY, cardWidth, cardHeight) {
+function stackedWorkspace(entrance, beat, width, height, cardX, cardY, cardWidth, cardHeight, currentTime, opacity = 1) {
   const slide = (1 - entrance) * 90
   const innerX = cardX + 28
   const innerWidth = cardWidth - 56
@@ -143,7 +158,18 @@ function stackedWorkspace(entrance, beat, width, height, cardX, cardY, cardWidth
   const contentHeight = cardHeight - navHeight - 54
   const active = beat === 'generate' ? COLORS.mint : COLORS.orange
   const caption = beat === 'scan' ? 'Scan the UI.' : beat === 'generate' ? 'Generate exact coverage.' : 'Fill realistic data.'
-  return `<g data-section="active-card" data-x="${number(cardX)}" data-y="${number(cardY)}" data-width="${number(cardWidth)}" data-height="${number(cardHeight)}" transform="translate(0 ${number(slide)})">
+  const scenarioCount = scenarioCountFor(currentTime)
+  const checklistY = contentY + 170
+  const checklistGap = 8
+  const checklistRowHeight = Math.min(38, (contentY + contentHeight - 18 - checklistY - checklistGap * 2) / 3)
+  const checklist = beat === 'fill' ? `<g data-section="field-checklist">${FIELD_ROWS.map((field, index) => {
+    const selected = index < 2
+    const rowY = checklistY + index * (checklistRowHeight + checklistGap)
+    const checkX = innerX + 44
+    const checkY = rowY + checklistRowHeight / 2
+    return `<g data-field="${escapeXml(field)}" data-selected="${selected}">${roundedRect(innerX + 24, rowY, innerWidth - 48, checklistRowHeight, selected ? '#edf5ee' : '#f5f7f2', 8)}<circle cx="${number(checkX)}" cy="${number(checkY)}" r="${number(Math.min(9, checklistRowHeight * 0.28))}" fill="${selected ? COLORS.orange : COLORS.white}" stroke="${selected ? COLORS.orange : COLORS.line}"/>${selected ? text('✓', checkX, checkY + 5, Math.min(14, checklistRowHeight * 0.5), COLORS.white, 700, 'middle') : ''}${text(field, innerX + 64, checkY + 5, Math.min(16, checklistRowHeight * 0.52), COLORS.copy, 600)}</g>`
+  }).join('')}</g>` : ''
+  return `<g data-scene="workspace" data-section="active-card" data-x="${number(cardX)}" data-y="${number(cardY)}" data-width="${number(cardWidth)}" data-height="${number(cardHeight)}" opacity="${number(opacity)}" transform="translate(0 ${number(slide)})">
     ${roundedRect(cardX, cardY, cardWidth, cardHeight, COLORS.green, 28)}
     ${text('TestPilot', innerX, cardY + 42, 26, COLORS.mint, 700)}
     ${text('Workspace', innerX + 150, cardY + 42, 20, '#b5c9bd', 500)}
@@ -152,21 +178,25 @@ function stackedWorkspace(entrance, beat, width, height, cardX, cardY, cardWidth
     ${text('Fill', cardX + cardWidth - 55, cardY + 42, 18, beat === 'fill' ? COLORS.mint : COLORS.white, 700, 'end')}
     ${roundedRect(innerX, contentY, innerWidth, contentHeight, '#f9fbf7', 18)}
     ${text('Checkout flow', innerX + 28, contentY + 42, 25, COLORS.green, 700)}
-    ${text(beat === 'generate' ? '10 of 10 scenarios' : beat === 'fill' ? 'Selected fields' : 'Ready to inspect', innerX + 28, contentY + 76, 17, COLORS.copy, 600)}
+    ${text(beat === 'generate' ? `${scenarioCount} of 10 scenarios` : beat === 'fill' ? 'Selected fields' : 'Ready to inspect', innerX + 28, contentY + 76, 17, COLORS.copy, 600)}
     ${roundedRect(innerX + 24, contentY + 100, innerWidth - 48, 54, active, 12)}
     ${text(caption, innerX + 48, contentY + 135, 20, COLORS.green, 700)}
+    ${checklist}
   </g>`
 }
 
-function stackedSource(entrance, cardX, cardY, cardWidth, cardHeight) {
-  const slide = (1 - entrance) * 90
-  return `<g data-section="active-card" data-x="${number(cardX)}" data-y="${number(cardY)}" data-width="${number(cardWidth)}" data-height="${number(cardHeight)}" transform="translate(0 ${number(slide)})">
-    ${roundedRect(cardX, cardY, cardWidth, cardHeight, COLORS.white, 28, `stroke="${COLORS.line}" stroke-width="3"`)}
-    ${text('figma / checkout', cardX + 28, cardY + 44, 20, COLORS.copy, 600)}
-    ${text('Checkout', cardX + 28, cardY + 108, 32, COLORS.green, 700)}
-    ${roundedRect(cardX + 28, cardY + 140, cardWidth * 0.55, cardHeight - 188, '#f8faf7', 16)}
-    ${roundedRect(cardX + cardWidth * 0.64, cardY + 140, cardWidth * 0.28, cardHeight - 230, COLORS.green, 16)}
-    ${text('$128.00', cardX + cardWidth * 0.68, cardY + 202, 30, COLORS.white, 700)}
+function stackedSource(entrance, cardX, cardY, cardWidth, cardHeight, { opacity = 1, handoff = 0 } = {}) {
+  const offsetX = -handoff * 44
+  const offsetY = (1 - entrance) * 90 + handoff * 10
+  const x = cardX + offsetX
+  const y = cardY + offsetY
+  return `<g data-scene="source" data-tilt="-2" data-section="active-card" data-x="${number(x)}" data-y="${number(y)}" data-width="${number(cardWidth)}" data-height="${number(cardHeight)}" opacity="${number(opacity)}" transform="skewY(-2)">
+    ${roundedRect(x, y, cardWidth, cardHeight, COLORS.white, 28, `stroke="${COLORS.line}" stroke-width="3"`)}
+    ${text('figma / checkout', x + 28, y + 44, 20, COLORS.copy, 600)}
+    ${text('Checkout', x + 28, y + 108, 32, COLORS.green, 700)}
+    ${roundedRect(x + 28, y + 140, cardWidth * 0.55, cardHeight - 188, '#f8faf7', 16)}
+    ${roundedRect(x + cardWidth * 0.64, y + 140, cardWidth * 0.28, cardHeight - 230, COLORS.green, 16)}
+    ${text('$128.00', x + cardWidth * 0.68, y + 202, 30, COLORS.white, 700)}
   </g>`
 }
 
@@ -194,8 +224,12 @@ function renderStackedFrame({ currentTime, width, height, beat, entrance }) {
   const center = width / 2
   const headline = beat.label
   let activeCard = ''
-  if (beat.id === 'source') activeCard = stackedSource(entrance, padding, cardY, contentWidth, cardHeight)
-  if (beat.id === 'scan' || beat.id === 'generate' || beat.id === 'fill') activeCard = stackedWorkspace(entrance, beat.id, width, height, padding, cardY, contentWidth, cardHeight)
+  if (currentTime >= HANDOFF_START && currentTime < HANDOFF_END) {
+    const handoff = handoffProgressFor(currentTime)
+    const workspaceEntrance = progressFor(currentTime, 2, 4)
+    activeCard = `<g data-transition="source-to-workspace" data-progress="${number(handoff)}">${stackedSource(1, padding, cardY, contentWidth, cardHeight, { opacity: 1 - handoff, handoff })}${stackedWorkspace(workspaceEntrance, 'scan', width, height, padding, cardY, contentWidth, cardHeight, currentTime, handoff)}</g>`
+  } else if (beat.id === 'source') activeCard = stackedSource(entrance, padding, cardY, contentWidth, cardHeight)
+  if (!activeCard && (beat.id === 'scan' || beat.id === 'generate' || beat.id === 'fill')) activeCard = stackedWorkspace(entrance, beat.id, width, height, padding, cardY, contentWidth, cardHeight, currentTime)
   if (beat.id === 'promise') activeCard = stackedEnd(entrance, width, height, padding, cardY, contentWidth, cardHeight)
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(headline)}" data-layout="stacked">
   <rect width="${width}" height="${height}" fill="${COLORS.paper}"/>
@@ -231,8 +265,12 @@ export function renderMarketingFrame({ time, width, height }) {
   const headline = beat.label
   let scene = ''
 
-  if (beat.id === 'source') scene = sourceCard(entrance, narrow)
-  if (beat.id === 'scan' || beat.id === 'generate' || beat.id === 'fill') scene = workspace(entrance, beat.id, narrow)
+  if (currentTime >= HANDOFF_START && currentTime < HANDOFF_END) {
+    const handoff = handoffProgressFor(currentTime)
+    const workspaceEntrance = progressFor(currentTime, 2, 4)
+    scene = `<g data-transition="source-to-workspace" data-progress="${number(handoff)}">${sourceCard(1, narrow, { opacity: 1 - handoff, handoff })}${workspace(workspaceEntrance, 'scan', narrow, currentTime, handoff)}</g>`
+  } else if (beat.id === 'source') scene = sourceCard(entrance, narrow)
+  if (!scene && (beat.id === 'scan' || beat.id === 'generate' || beat.id === 'fill')) scene = workspace(entrance, beat.id, narrow, currentTime)
   if (beat.id === 'promise') scene = endCard(entrance, narrow)
 
   const headlineY = narrow ? 250 : 190

@@ -31,10 +31,42 @@ describe('marketing scene', () => {
     expect(ending).toContain('TestPilot')
   })
 
-  test('wide opening uses ImageMagick-compatible card transforms', () => {
+  test('tilts the source card with one affine transform and hands it to the workspace', () => {
     const opening = renderMarketingFrame({ time: 1, width: 1920, height: 1080 })
+    const handoff = renderMarketingFrame({ time: 2.1, width: 1920, height: 1080 })
 
+    expect(opening).toMatch(/data-scene="source"[^>]*data-tilt="-2"[^>]*transform="skewY\(-2\)"/)
     expect(opening).not.toContain('rotate(')
+    expect(opening).not.toContain('matrix(')
+    expect(handoff).toContain('data-transition="source-to-workspace"')
+    expect(handoff).toContain('data-progress="0.67"')
+    expect(handoff).toMatch(/data-scene="source"[^>]*opacity="0\.33"/)
+    expect(handoff).toMatch(/data-scene="workspace"[^>]*opacity="0\.67"/)
+    expect(handoff).toContain('figma / checkout')
+    expect(handoff).toContain('Workspace')
+  })
+
+  test('increments the reviewable scenario count across the Generate beat', () => {
+    const countAt = (time) => {
+      const frame = renderMarketingFrame({ time, width: 1920, height: 1080 })
+      return Number(frame.match(/(\d+) of 10 scenarios/)?.[1])
+    }
+
+    expect([4, 4.2, 4.4, 4.6, 4.8, 5, 5.2, 5.4, 5.6, 5.8].map(countAt))
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  })
+
+  test('keeps the selected-field checklist in square and vertical Fill scenes', () => {
+    for (const height of [1080, 1920]) {
+      const frame = renderMarketingFrame({ time: 7.5, width: 1080, height })
+
+      expect(frame).toContain('data-section="field-checklist"')
+      expect(frame).toContain('Email address')
+      expect(frame).toContain('Shipping address')
+      expect(frame).toContain('Payment details')
+      expect(frame.match(/data-selected="true"/g)).toHaveLength(2)
+      expect(frame.match(/data-selected="false"/g)).toHaveLength(1)
+    }
   })
 
   test('stacks narrow headline, active card, and supporting elements inside the canvas', () => {

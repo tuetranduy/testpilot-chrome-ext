@@ -133,8 +133,8 @@ import { describe, expect, test } from 'vitest'
 import { parseArgs, buildEncodeCommands } from './render.mjs'
 
 describe('marketing render CLI', () => {
-  test('defaults to all approved deliverables', () => {
-    expect(parseArgs([]).presets).toEqual(['master', 'gif', 'square', 'vertical'])
+  test('defaults to the master MP4 and GIF preview', () => {
+    expect(parseArgs([]).presets).toEqual(['master', 'gif'])
   })
 
   test('accepts a preset, output directory, and retained-frame flag', () => {
@@ -173,10 +173,11 @@ For each selected preset, create a temporary `<outputDir>/.frames/<preset>` dire
 
 ```text
 ffmpeg -y -framerate <fps> -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p -movflags +faststart <preset>.mp4
-ffmpeg -y -framerate <fps> -i frame-%04d.png -vf "fps=<fps>,scale=<width>:<height>:flags=lanczos" -loop 0 <preset>.gif
+ffmpeg -y -framerate <fps> -i frame-%04d.png -vf "fps=<fps>,scale=<width>:<height>:flags=lanczos,palettegen=max_colors=128:stats_mode=diff" palette.png
+ffmpeg -y -framerate <fps> -i frame-%04d.png -i palette.png -lavfi "fps=<fps>,scale=<width>:<height>:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle" -loop 0 <preset>.gif
 ```
 
-Use a GIF-specific output only for the `gif` preset; the square and vertical presets produce MP4 only. Check `command -v convert` and `command -v ffmpeg` before rendering and exit with the exact missing command name plus installation guidance. Clean the frame directory on success unless `--keep-frames` is set. Keep `runCommand` injectable so tests can inspect commands without invoking binaries.
+Use a GIF-specific output only for the `gif` preset; the square and vertical presets produce MP4 only. The default CLI render produces the master MP4 and GIF preview; explicit `--preset all` produces all four outputs. Check `command -v convert` and `command -v ffmpeg` before rendering and exit with the exact missing command name plus installation guidance. Clean the frame directory on success unless `--keep-frames` is set. Keep `runCommand` injectable so tests can inspect commands without invoking binaries.
 
 - [ ] **Step 4: Add package scripts**
 
@@ -219,11 +220,11 @@ git commit -m "feat: add marketing video render pipeline"
 
 - [ ] **Step 1: Write the usage documentation**
 
-Document prerequisites, default render command, individual preset commands, output dimensions, the five-beat timeline, and the safe way to revise copy/timing: edit `TIMELINE` or renderer scene data, run `npm run marketing:test`, then rerun `npm run marketing:render`.
+Document prerequisites, that the default render command produces the master MP4 and GIF preview, that explicit `--preset all` produces all four deliverables, individual preset commands, output dimensions, the five-beat timeline, and the safe way to revise copy/timing: edit `TIMELINE` or renderer scene data, run `npm run marketing:test`, then rerun `npm run marketing:render -- --preset all`.
 
 - [ ] **Step 2: Render all outputs**
 
-Run: `npm run marketing:render -- --output-dir marketing/exports`
+Run: `npm run marketing:render -- --preset all --output-dir marketing/exports`
 
 Expected: the command writes the four files listed above and prints their dimensions, duration, and output paths.
 

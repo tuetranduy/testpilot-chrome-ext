@@ -32,7 +32,7 @@ function resolveRasterFontPath() {
 
 export function parseArgs(argv) {
   const options = {
-    presets: [...PRESET_NAMES],
+    presets: ['master', 'gif'],
     outputDir: path.resolve('marketing/exports'),
     keepFrames: false,
   }
@@ -67,11 +67,20 @@ export function buildEncodeCommands(presetName, preset, frameDir, outputDir) {
   const outputPath = path.join(outputDir, OUTPUT_NAMES[presetName])
 
   if (presetName === 'gif') {
-    return [[
-      'ffmpeg', '-y', '-framerate', String(preset.fps), '-i', inputPattern,
-      '-vf', `fps=${preset.fps},scale=${preset.width}:${preset.height}:flags=lanczos`,
-      '-loop', '0', outputPath,
-    ]]
+    const palettePath = path.join(frameDir, 'palette.png')
+    const scale = `fps=${preset.fps},scale=${preset.width}:${preset.height}:flags=lanczos`
+    return [
+      [
+        'ffmpeg', '-y', '-framerate', String(preset.fps), '-i', inputPattern,
+        '-vf', `${scale},palettegen=max_colors=128:stats_mode=diff`, palettePath,
+      ],
+      [
+        'ffmpeg', '-y', '-framerate', String(preset.fps), '-i', inputPattern,
+        '-i', palettePath,
+        '-lavfi', `${scale}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle`,
+        '-loop', '0', outputPath,
+      ],
+    ]
   }
 
   return [[
@@ -144,8 +153,9 @@ export function renderPreset(presetName, {
     runCommand(['convert', '-font', fontPath, '-background', 'none', svgPath, pngPath])
   }
 
-  const [encodeCommand] = buildEncodeCommands(presetName, preset, frameDir, outputDir)
-  runCommand(encodeCommand)
+  for (const encodeCommand of buildEncodeCommands(presetName, preset, frameDir, outputDir)) {
+    runCommand(encodeCommand)
+  }
   if (!keepFrames) rmSync(frameDir, { recursive: true, force: true })
 
   return {

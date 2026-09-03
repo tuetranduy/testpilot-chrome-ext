@@ -21,10 +21,10 @@ The renderer automatically uses a common system font file for reliable ImageMagi
 From the repository root, render all four approved outputs with:
 
 ```bash
-npm run marketing:render -- --output-dir marketing/exports
+npm run marketing:render -- --preset all --output-dir marketing/exports
 ```
 
-The default command is equivalent to `--preset all`. To render one preset at a time:
+The default command renders the 16:9 master MP4 and GIF preview. Use `--preset all` for all four deliverables, or render one preset at a time:
 
 ```bash
 npm run marketing:render -- --preset master --output-dir marketing/exports
@@ -62,5 +62,5 @@ After every copy or timing change, run the marketing tests before regenerating e
 
 ```bash
 npm run marketing:test
-npm run marketing:render -- --output-dir marketing/exports
+npm run marketing:render -- --preset all --output-dir marketing/exports
 ```

@@ -21,8 +21,8 @@ function makeOutputDirectory() {
 }
 
 describe('marketing render CLI', () => {
-  test('defaults to all approved deliverables', () => {
-    expect(parseArgs([]).presets).toEqual(['master', 'gif', 'square', 'vertical'])
+  test('defaults to the master MP4 and GIF preview', () => {
+    expect(parseArgs([]).presets).toEqual(['master', 'gif'])
   })
 
   test('accepts a preset, output directory, and retained-frame flag', () => {
@@ -46,11 +46,19 @@ describe('marketing render CLI', () => {
         '/tmp/out/testpilot-marketing-master.mp4',
       ]])
     expect(buildEncodeCommands('gif', { width: 960, height: 540, fps: 15 }, '/tmp/frames', '/tmp/out'))
-      .toEqual([[
-        'ffmpeg', '-y', '-framerate', '15', '-i', '/tmp/frames/frame-%04d.png',
-        '-vf', 'fps=15,scale=960:540:flags=lanczos', '-loop', '0',
-        '/tmp/out/testpilot-marketing-preview.gif',
-      ]])
+      .toEqual([
+        [
+          'ffmpeg', '-y', '-framerate', '15', '-i', '/tmp/frames/frame-%04d.png',
+          '-vf', 'fps=15,scale=960:540:flags=lanczos,palettegen=max_colors=128:stats_mode=diff',
+          '/tmp/frames/palette.png',
+        ],
+        [
+          'ffmpeg', '-y', '-framerate', '15', '-i', '/tmp/frames/frame-%04d.png',
+          '-i', '/tmp/frames/palette.png',
+          '-lavfi', 'fps=15,scale=960:540:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle',
+          '-loop', '0', '/tmp/out/testpilot-marketing-preview.gif',
+        ],
+      ])
   })
 
   test('renders deterministic frames, invokes injected commands, and cleans frames on success', () => {
@@ -85,12 +93,12 @@ describe('marketing render CLI', () => {
       ['command', '-v', 'ffmpeg'],
     ])
     expect(commands.filter(([command]) => command === 'convert')).toHaveLength(180)
-    expect(commands.at(-1)).toEqual(buildEncodeCommands(
+    expect(commands.slice(-2)).toEqual(buildEncodeCommands(
       'gif',
       { width: 960, height: 540, fps: 15, duration: 12 },
       path.join(outputDir, '.frames', 'gif'),
       outputDir,
-    )[0])
+    ))
     expect(existsSync(path.join(outputDir, '.frames', 'gif'))).toBe(false)
   })
 
