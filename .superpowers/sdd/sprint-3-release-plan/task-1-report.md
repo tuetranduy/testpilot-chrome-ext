@@ -17,6 +17,13 @@
 - `npm test` passed (`25` test files, `132` tests).
 - `git diff --check` passed.
 
+## Fix round 2
+
+- Added an exact contract assertion for `manifest.name.length === 0`, protecting the built manifest’s non-empty-name validation.
+- Red evidence: temporarily removed the empty-name guard from the workflow; `npm test -- release.workflow.test.ts` failed on the missing `/manifest\\.name\\.length === 0/` assertion.
+- Green evidence: restored the guard; `npm test -- release.workflow.test.ts` passed (`1` test, `1` passed).
+- `git diff --check` passed.
+
 ## Self-review
 
 The workflow uses `actions/checkout@v4`, `actions/setup-node@v4` with npm caching, `npm ci`, test/lint/build gates, explicit Manifest V3/name validation, and `zip` from inside `dist` so `manifest.json` is at the ZIP root. It grants only `contents: write` and publishes `testpilot-chrome-extension.zip` with `softprops/action-gh-release@v2`.

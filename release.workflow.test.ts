@@ -14,6 +14,7 @@ describe('tagged release workflow', () => {
     expect(workflow).toMatch(/test -f dist\/manifest\.json/)
     expect(workflow).toMatch(/manifest\.manifest_version !== 3/)
     expect(workflow).toMatch(/typeof manifest\.name !== 'string'/)
+    expect(workflow).toMatch(/manifest\.name\.length === 0/)
     expect(workflow).toMatch(/cd dist && zip -r \.\.\/testpilot-chrome-extension\.zip \./)
     expect(workflow).toMatch(/contents:\s*write/)
     expect(workflow).toMatch(/uses: softprops\/action-gh-release@v2/)
