@@ -74,6 +74,23 @@ describe('SettingsTab', () => {
     }) })))
   })
 
+  it('keeps an exact vision override visible so it can be revoked and removed on save', async () => {
+    const onSave = vi.fn()
+    const settings = {
+      ...DEFAULT_SETTINGS,
+      providers: { ...DEFAULT_SETTINGS.providers, local: { ...DEFAULT_SETTINGS.providers.local, model: 'llava', visionOverride: { model: 'llava', supported: true } } },
+    }
+    render(<SettingsTab settings={settings} onSave={onSave} />)
+
+    const override = screen.getByLabelText('This model accepts image input for Local LLM') as HTMLInputElement
+    expect(override.checked).toBe(true)
+    fireEvent.click(override)
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalled())
+    expect(onSave.mock.calls[0][0].providers.local.visionOverride).toBeUndefined()
+  })
+
   it('clears a stale vision confirmation when the model changes', async () => {
     const onSave = vi.fn()
     const settings = {

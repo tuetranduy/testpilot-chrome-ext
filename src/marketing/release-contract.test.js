@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 const latestDownload = 'https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip'
 const latestRelease = 'https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest'
 const marketing = readFileSync('docs/index.html', 'utf8')
+const marketingStyles = readFileSync('docs/styles.css', 'utf8')
 const readme = readFileSync('README.md', 'utf8')
 
 describe('latest release marketing contract', () => {
@@ -23,6 +24,36 @@ describe('latest release marketing contract', () => {
 
     const documentsLink = page.querySelector('header .header-nav[aria-label="Primary navigation"] a.header-link[href="documents.html"]')
     expect(documentsLink?.textContent).toContain('Documents')
+  })
+
+  test('gives every homepage primary navigation link a 24px target and a 44px mobile target with narrow reflow', () => {
+    const page = document.createElement('div')
+    page.innerHTML = marketing
+    const navigationLinks = page.querySelectorAll('header nav[aria-label="Primary navigation"] > a.header-link')
+    expect(navigationLinks).toHaveLength(2)
+
+    const style = document.createElement('style')
+    style.textContent = marketingStyles
+    document.head.append(style)
+    const baseRules = Array.from(style.sheet?.cssRules ?? []).filter((rule) => rule.type === 1)
+    const baseHeaderLinkRule = baseRules.find((rule) => rule.selectorText === '.header-link')
+    expect(baseHeaderLinkRule?.style.display).toBe('inline-flex')
+    expect(baseHeaderLinkRule?.style.alignItems).toBe('center')
+    expect(baseHeaderLinkRule?.style.minHeight).toBe('24px')
+
+    const mobileRules = Array.from(style.sheet?.cssRules ?? [])
+      .filter((rule) => rule.type === 4 && rule.conditionText === '(max-width:560px)')
+      .flatMap((mediaRule) => Array.from(mediaRule.cssRules))
+    const mobileHeaderLinkRule = mobileRules.find((rule) => rule.selectorText === '.header-link')
+    expect(mobileHeaderLinkRule?.style.minHeight).toBe('44px')
+    expect(mobileHeaderLinkRule?.style.minWidth).toBe('44px')
+
+    const narrowRules = Array.from(style.sheet?.cssRules ?? [])
+      .filter((rule) => rule.type === 4 && rule.conditionText === '(max-width:360px)')
+      .flatMap((mediaRule) => Array.from(mediaRule.cssRules))
+    expect(narrowRules.find((rule) => rule.selectorText === '.site-header')?.style.flexWrap).toBe('wrap')
+    expect(narrowRules.find((rule) => rule.selectorText === '.header-nav')?.style.flexBasis).toBe('100%')
+    style.remove()
   })
 
   test('explains image uploads, optional full-page context, and vision requirements', () => {

@@ -26,6 +26,8 @@ vi.mock('../../lib/images', () => ({
 
 const uploadedImage = { id: 'image-1', name: 'Checkout.png', mimeType: 'image/webp', width: 1200, height: 800, dataUrl: 'data:image/webp;base64,upload', role: 'upload' as const }
 const fullPageImage = { ...uploadedImage, id: 'full-page', name: 'Checkout-full.png', dataUrl: 'data:image/webp;base64,full', role: 'full-page' as const }
+const viewportImage = { ...uploadedImage, id: 'viewport', name: 'Page viewport', dataUrl: 'data:image/jpeg;base64,viewport', role: 'viewport' as const }
+const figmaPreviewImage = { ...uploadedImage, id: 'figma-preview', name: 'Checkout frame preview', dataUrl: 'data:image/png;base64,figma', role: 'figma-preview' as const }
 
 const webRecord: RunRecord = {
   locator: { source: 'web', origin: 'https://example.com', pathname: '/checkout', url: 'https://example.com/checkout', label: 'Checkout' },
@@ -39,10 +41,47 @@ const webRecord: RunRecord = {
   },
 }
 
+const webRecordWithViewport: RunRecord = {
+  ...webRecord,
+  lastScan: { ...webRecord.lastScan!, images: [viewportImage] },
+}
+
+const figmaRecordWithPreview: RunRecord = {
+  locator: { source: 'figma', fileKey: 'ABC', nodeId: '1:2', url: 'https://www.figma.com/design/ABC/App', label: 'App — Checkout' },
+  updatedAt: 1,
+  requirementsText: '',
+  testCases: [],
+  fieldValues: {},
+  lastScan: {
+    source: 'figma',
+    url: 'https://www.figma.com/design/ABC/App',
+    title: 'App — Checkout',
+    scannedAt: 1,
+    fileKey: 'ABC',
+    pageId: '0:1',
+    pageName: 'Flows',
+    nodeId: '1:2',
+    nodeName: 'Checkout',
+    nodes: [{ id: '1:3', name: 'Pay now', type: 'TEXT', text: 'Pay now', visible: true, componentId: null, interactionTriggers: [], layoutMode: null, width: 100, height: 20 }],
+    images: [figmaPreviewImage],
+    previewWarning: null,
+  },
+}
+
+const unknownVisionSettings: Settings = { ...DEFAULT_SETTINGS, activeProvider: 'local' }
+const textOnlySettings: Settings = {
+  ...DEFAULT_SETTINGS,
+  providers: { ...DEFAULT_SETTINGS.providers, openai: { ...DEFAULT_SETTINGS.providers.openai, model: 'gpt-3.5-turbo' } },
+}
+
 function renderTab(record = webRecord, onUpdate = vi.fn(), onSelectRun = vi.fn().mockResolvedValue(undefined), onCreateRun = vi.fn(), settings: Settings = DEFAULT_SETTINGS, onOpenSettings = vi.fn()) {
   const tab = { id: 1, windowId: 1, url: 'https://example.com/checkout', title: 'Checkout' } as chrome.tabs.Tab
-  render(<ScanTab tab={tab} granted settings={settings} siteRecord={record} setGranted={vi.fn()} onUpdate={onUpdate} onSelectRun={onSelectRun} onCreateRun={onCreateRun} onOpenSettings={onOpenSettings} />)
-  return { onUpdate, onSelectRun, onCreateRun, onOpenSettings }
+  const setGranted = vi.fn()
+  const view = render(<ScanTab tab={tab} granted settings={settings} siteRecord={record} setGranted={setGranted} onUpdate={onUpdate} onSelectRun={onSelectRun} onCreateRun={onCreateRun} onOpenSettings={onOpenSettings} />)
+  const rerenderTab = (nextRecord: RunRecord, nextSettings: Settings) => view.rerender(
+    <ScanTab tab={tab} granted settings={nextSettings} siteRecord={nextRecord} setGranted={setGranted} onUpdate={onUpdate} onSelectRun={onSelectRun} onCreateRun={onCreateRun} onOpenSettings={onOpenSettings} />,
+  )
+  return { onUpdate, onSelectRun, onCreateRun, onOpenSettings, rerenderTab }
 }
 
 function cases(count: number, gherkin: string | null = null): string {
@@ -191,9 +230,8 @@ describe('ScanTab', () => {
   })
 
   it('blocks image-backed generation when model vision support is unknown', () => {
-    const settings: Settings = { ...DEFAULT_SETTINGS, activeProvider: 'local' }
     const onOpenSettings = vi.fn()
-    renderTab({ ...webRecord, lastScan: { ...webRecord.lastScan!, images: [fullPageImage] } }, vi.fn(), vi.fn(), vi.fn(), settings, onOpenSettings)
+    renderTab({ ...webRecord, lastScan: { ...webRecord.lastScan!, images: [fullPageImage] } }, vi.fn(), vi.fn(), vi.fn(), unknownVisionSettings, onOpenSettings)
 
     expect((screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText(/vision support for .* is unknown/i)).toBeTruthy()
@@ -202,26 +240,82 @@ describe('ScanTab', () => {
   })
 
   it('blocks image-backed generation for a known text-only model', () => {
-    const settings: Settings = {
-      ...DEFAULT_SETTINGS,
-      providers: { ...DEFAULT_SETTINGS.providers, openai: { ...DEFAULT_SETTINGS.providers.openai, model: 'gpt-3.5-turbo' } },
-    }
-    renderTab({ ...webRecord, lastScan: { ...webRecord.lastScan!, images: [fullPageImage] } }, vi.fn(), vi.fn(), vi.fn(), settings)
+    renderTab({ ...webRecord, lastScan: { ...webRecord.lastScan!, images: [fullPageImage] } }, vi.fn(), vi.fn(), vi.fn(), textOnlySettings)
 
     expect((screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText(/gpt-3\.5-turbo is text-only/i)).toBeTruthy()
   })
 
   it('allows structured-only generation when model vision support is unknown', async () => {
-    const settings: Settings = { ...DEFAULT_SETTINGS, activeProvider: 'local' }
     mocks.chatWithProvider.mockResolvedValue(cases(5))
-    renderTab(webRecord, vi.fn(), vi.fn(), vi.fn(), settings)
+    renderTab(webRecord, vi.fn(), vi.fn(), vi.fn(), unknownVisionSettings)
 
     const generate = screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement
     expect(generate.disabled).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: '5 test cases' }))
     fireEvent.click(generate)
     await waitFor(() => expect(mocks.chatWithProvider).toHaveBeenCalled())
+  })
+
+  it.each([
+    ['web scan with a viewport capture', webRecordWithViewport, unknownVisionSettings, viewportImage.name],
+    ['Figma scan with a rendered preview', figmaRecordWithPreview, textOnlySettings, figmaPreviewImage.name],
+  ])('lets a %s explicitly continue with structure while omitting provider images', async (_label, record, settings, imageName) => {
+    mocks.chatWithProvider.mockResolvedValue(cases(5))
+    renderTab(record, vi.fn(), vi.fn(), vi.fn(), settings)
+
+    const generate = screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement
+    expect(generate.disabled).toBe(true)
+
+    fireEvent.click(screen.getByRole('button', { name: /continue without images/i }))
+
+    expect(generate.disabled).toBe(false)
+    expect(screen.getByText(/images will be omitted.*structured/i)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '5 test cases' }))
+    fireEvent.click(generate)
+
+    await waitFor(() => expect(mocks.chatWithProvider).toHaveBeenCalled())
+    expect(mocks.chatWithProvider.mock.calls[0][3]).toBeUndefined()
+    expect(mocks.chatWithProvider.mock.calls[0][2][1].content).not.toContain(imageName)
+  })
+
+  it('resets structured-only consent when the scan, model, or provider changes', async () => {
+    const { rerenderTab } = renderTab(webRecordWithViewport, vi.fn(), vi.fn(), vi.fn(), unknownVisionSettings)
+    const generate = screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement
+
+    fireEvent.click(screen.getByRole('button', { name: /continue without images/i }))
+    expect(generate.disabled).toBe(false)
+
+    const rescannedRecord: RunRecord = {
+      ...webRecordWithViewport,
+      lastScan: { ...webRecordWithViewport.lastScan!, title: 'Checkout rescanned', scannedAt: 2 },
+    }
+    rerenderTab(rescannedRecord, unknownVisionSettings)
+    await waitFor(() => expect(generate.disabled).toBe(true))
+
+    fireEvent.click(screen.getByRole('button', { name: /continue without images/i }))
+    const nextModelSettings: Settings = {
+      ...unknownVisionSettings,
+      providers: { ...unknownVisionSettings.providers, local: { ...unknownVisionSettings.providers.local, model: 'qwen-custom' } },
+    }
+    rerenderTab(rescannedRecord, nextModelSettings)
+    await waitFor(() => expect(generate.disabled).toBe(true))
+
+    fireEvent.click(screen.getByRole('button', { name: /continue without images/i }))
+    const nextProviderSettings: Settings = { ...nextModelSettings, activeProvider: 'openai', providers: textOnlySettings.providers }
+    rerenderTab(rescannedRecord, nextProviderSettings)
+    await waitFor(() => expect(generate.disabled).toBe(true))
+  })
+
+  it('keeps image-only scans blocked without a structured-only fallback', () => {
+    renderTab({
+      ...webRecord,
+      locator: { source: 'image', runId: 'images', label: 'Checkout.png' },
+      lastScan: { source: 'image', title: 'Checkout.png', scannedAt: 1, images: [uploadedImage] },
+    }, vi.fn(), vi.fn(), vi.fn(), unknownVisionSettings)
+
+    expect((screen.getByRole('button', { name: /generate test cases/i }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: /continue without images/i })).toBeNull()
   })
 
   it('does not generate an image run after its last image is removed', () => {

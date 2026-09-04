@@ -56,20 +56,25 @@ it can be retried.
 2. Upload one to five related PNG, JPEG, or WebP UI screenshots.
 3. Add optional requirements, then generate the requested test cases.
 
-Image scans and optional full-page web context require a **vision-capable**
-model. Choose a provider model that supports images; text-only models cannot
-generate image-based test cases. TestPilot shows the model capability in
-Settings and blocks generation until a vision-capable model is selected.
+Uploaded-image scans require a **vision-capable** model. Web and Figma scans can
+fall back to their structured elements or nodes: when the selected model is
+text-only or its vision support is unknown, TestPilot warns you and lets you
+continue without sending the captured images. TestPilot shows model capability
+in Settings; image-only generation remains blocked until a vision-capable model
+is selected.
 
 ## Scan a Figma Design
 
 ### Create a token
 
 1. In Figma, open account settings and create a personal access token.
-2. Grant the token the `file_content:read` scope and access to the files you
-   intend to scan.
+2. Grant only the `file_content:read` scope. It limits which Figma API endpoints
+   the token can use; the token inherits your existing Figma file access and
+   does not grant or restrict access per file.
 3. In TestPilot **Settings**, paste the token under **Figma connection** and
-   save settings. The masked token is stored locally in `chrome.storage.local`.
+   save settings. TestPilot stores the raw token locally in
+   `chrome.storage.local`; only its on-screen presentation is masked by the
+   password input.
 
 Figma personal access tokens may expire after at most 90 days. If TestPilot
 reports an expired token or a 403 response, create a replacement token with

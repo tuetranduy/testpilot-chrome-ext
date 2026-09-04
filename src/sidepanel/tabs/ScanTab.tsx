@@ -9,7 +9,7 @@ import { scanActiveTab } from '../../lib/tabActions'
 import { generateTestCaseSuite } from '../../lib/testCaseGeneration'
 import { imageRunLabel, MAX_SCAN_IMAGES, normalizeImageFiles } from '../../lib/images'
 import { getVisionCapability } from '../../lib/modelCapabilities'
-import type { ImageScanResult, RunLocator, RunRecord, ScanImage, Settings, TestCaseFormat, WebRunLocator } from '../../lib/types'
+import type { ImageScanResult, RunLocator, RunRecord, ScanImage, ScanResult, Settings, TestCaseFormat, WebRunLocator } from '../../lib/types'
 import { Badge, Button, Card, EmptyState, Icon, InlineMessage, SectionTitle, Spinner, fieldClassName } from '../components/ui'
 
 interface Props {
@@ -71,6 +71,12 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   const [switchingRun, setSwitchingRun] = useState(false)
   const [processingImages, setProcessingImages] = useState(false)
   const [pendingFullPage, setPendingFullPage] = useState<ScanImage | null>(null)
+  const [structuredOnlyConsent, setStructuredOnlyConsent] = useState<{
+    source: RunLocator['source']
+    scan: ScanResult
+    provider: Settings['activeProvider']
+    model: string
+  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const scan = siteRecord.lastScan?.source === source ? siteRecord.lastScan : null
@@ -82,10 +88,25 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   const activeConfig = settings.providers[settings.activeProvider]
   const visionCapability = getVisionCapability(settings.activeProvider, activeConfig)
   const requiresVision = Boolean(scan && scan.images.length > 0)
-  const visionBlocked = requiresVision && visionCapability !== 'vision'
+  const visionIncompatible = requiresVision && visionCapability !== 'vision'
+  const canGenerateWithoutImages = Boolean(scan && scan.source !== 'image' && visionIncompatible)
+  const generateWithoutImages = Boolean(
+    scan
+    && structuredOnlyConsent?.source === source
+    && structuredOnlyConsent.scan === scan
+    && structuredOnlyConsent.provider === settings.activeProvider
+    && structuredOnlyConsent.model === activeConfig.model,
+  )
+  const omitImages = canGenerateWithoutImages && generateWithoutImages
+  const visionBlocked = visionIncompatible && !omitImages
   const displayedImages = scan
     ? pendingFullPage && scan.source === 'web' ? [...scan.images.filter((image) => image.role !== 'full-page'), pendingFullPage] : scan.images
     : pendingFullPage ? [pendingFullPage] : []
+
+  function continueWithoutImages() {
+    if (!scan) return
+    setStructuredOnlyConsent({ source, scan, provider: settings.activeProvider, model: activeConfig.model })
+  }
 
   async function selectSource(next: RunLocator['source']) {
     const previousSource = source
@@ -258,12 +279,14 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
         throw new Error('Permission to contact the AI provider was denied.')
       }
       const generated = await generateTestCaseSuite(requestedCount, async (batchCount, excludedTitles) => {
-        const { system, user } = buildTestCasePrompt(scan, siteRecord.requirementsText, format, batchCount, excludedTitles)
+        const generationScan = omitImages ? { ...scan, images: [] } : scan
+        const providerImages = omitImages ? [] : scan.images.map((image) => image.dataUrl)
+        const { system, user } = buildTestCasePrompt(generationScan, siteRecord.requirementsText, format, batchCount, excludedTitles)
         const text = await chatWithProvider(
           settings.activeProvider,
           config,
           [{ role: 'system', content: system }, { role: 'user', content: user }],
-          { images: scan.images.length > 0 ? scan.images.map((image) => image.dataUrl) : undefined },
+          providerImages.length > 0 ? { images: providerImages } : undefined,
         )
         return parseTestCasesResponse(text)
       }, (completed) => setGenerationProgress(completed))
@@ -401,13 +424,20 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
           {generating ? <><Spinner /> Generating {generationProgress} of {requestedCount}…</> : <><Icon name="sparkles" /> Generate test cases</>}
         </Button>
         {!hasUsableScan && <div className="mt-3"><InlineMessage>{source === 'image' ? 'Upload one or more images' : `Scan the selected ${source === 'figma' ? 'Figma design' : 'web page'}`} before generating test cases.</InlineMessage></div>}
-        {visionBlocked && (
+        {visionIncompatible && (
           <div className="mt-3">
             <InlineMessage>
-              <p>{visionCapability === 'text'
-                ? `${activeConfig.model} is text-only. Choose a vision-capable model to use attached images.`
-                : `Vision support for ${activeConfig.model} is unknown. Confirm it in Settings or choose a vision-capable model.`}</p>
-              <Button variant="secondary" size="small" className="mt-2" onClick={onOpenSettings}>Choose vision model</Button>
+              {omitImages ? (
+                <p>Images will be omitted. Generation will use the structured {scan?.source === 'figma' ? 'Figma nodes' : 'web page elements'} only.</p>
+              ) : (
+                <p>{visionCapability === 'text'
+                  ? `${activeConfig.model} is text-only. Choose a vision-capable model to use attached images.`
+                  : `Vision support for ${activeConfig.model} is unknown. Confirm it in Settings or choose a vision-capable model.`}</p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {canGenerateWithoutImages && !omitImages && <Button variant="secondary" size="small" onClick={continueWithoutImages}>Continue without images</Button>}
+                <Button variant="secondary" size="small" onClick={onOpenSettings}>Choose vision model</Button>
+              </div>
             </InlineMessage>
           </div>
         )}

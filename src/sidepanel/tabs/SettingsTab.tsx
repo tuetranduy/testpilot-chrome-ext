@@ -104,6 +104,7 @@ export function SettingsTab({ settings, onSave }: Props) {
 
       {(Object.keys(PROVIDER_LABELS) as ProviderId[]).map((id) => {
         const config = draft.providers[id]
+        const currentVisionOverride = config.visionOverride?.model === config.model ? config.visionOverride : undefined
         const capability = getVisionCapability(id, config)
         const capabilityLabel = visionCapabilityLabel(capability)
 
@@ -170,12 +171,12 @@ export function SettingsTab({ settings, onSave }: Props) {
                 />
               </div>
             )}
-            {capability === 'unknown' && (
+            {(capability === 'unknown' || currentVisionOverride) && (
               <label className="flex items-center gap-2 text-[11px] font-medium text-muted">
                 <input
                   type="checkbox"
                   aria-label={`This model accepts image input for ${PROVIDER_LABELS[id]}`}
-                  checked={config.visionOverride?.model === config.model && config.visionOverride.supported}
+                  checked={Boolean(currentVisionOverride?.supported)}
                   onChange={(event) => updateProvider(id, {
                     visionOverride: event.target.checked ? { model: config.model, supported: true } : undefined,
                   })}
