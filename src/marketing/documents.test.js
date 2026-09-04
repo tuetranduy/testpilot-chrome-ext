@@ -123,7 +123,7 @@ describe('onboarding documents page', () => {
     expect(settingsImage?.getAttribute('height')).toBe('1520')
   })
 
-  test('keeps every mobile primary navigation link at least 44px tall', () => {
+  test('keeps 44px mobile links and reflows the primary header at narrow widths', () => {
     const documentsStyles = readFileSync('docs/styles.css', 'utf8')
     const style = document.createElement('style')
     style.textContent = documentsStyles
@@ -139,6 +139,16 @@ describe('onboarding documents page', () => {
     expect(headerLinkRule?.style.minHeight).toBe('44px')
     expect(headerLinkRule?.style.minWidth).toBe('44px')
     expect(headerLinkRule?.style.padding).not.toBe('')
+
+    const narrowRules = Array.from(style.sheet?.cssRules ?? [])
+      .filter((rule) => rule.type === 4 && rule.conditionText === '(max-width:360px)')
+      .flatMap((mediaRule) => Array.from(mediaRule.cssRules))
+    const narrowHeaderRule = narrowRules.find((rule) => rule.selectorText === '.documents-page .site-header')
+    const narrowNavigationRule = narrowRules.find((rule) => rule.selectorText === '.documents-page .header-nav')
+
+    expect(narrowHeaderRule?.style.flexWrap).toBe('wrap')
+    expect(narrowNavigationRule?.style.flexBasis).toBe('100%')
+    expect(narrowNavigationRule?.style.justifyContent).toBe('space-between')
     style.remove()
   })
 

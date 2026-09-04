@@ -158,3 +158,44 @@ The updated docs page was rendered and inspected at **1440 × 900** and **390 ×
 ### Remaining concern
 
 The GitHub stable ZIP remains an external release-state dependency and returns 404 until an authorized maintainer publishes a version tag whose workflow uploads `testpilot-chrome-extension.zip`. No release, tag, push, or other external mutation was performed.
+
+## Fix round 2 — 2026-09-04
+
+### Narrow-header regression fix
+
+- Added a dedicated `@media (max-width:360px)` rule for the Documents header. The header now wraps and the primary navigation takes a 100% flex basis on its own row with space distributed between links.
+- Preserved the ≤560px link rule from fix round 1, so every narrow-screen link still has a minimum 44 × 44 CSS-pixel target.
+- Strengthened the CSSOM contract to require `flex-wrap: wrap` on the narrow header and `flex-basis: 100%` plus `justify-content: space-between` on its navigation. The contract continues to check the inherited link dimensions and alignment in the ≤560px rule.
+
+### RED / GREEN evidence
+
+RED before adding the ≤360px production rule:
+
+```text
+npx vitest run src/marketing/documents.test.js -t 'reflows the primary header'
+Test Files  1 failed (1)
+Tests       1 failed | 6 skipped (7)
+
+AssertionError: expected undefined to be 'wrap'
+```
+
+GREEN after the scoped CSS change:
+
+```text
+npx vitest run src/marketing/documents.test.js -t 'reflows the primary header'
+Test Files  1 passed (1)
+Tests       1 passed | 6 skipped (7)
+
+npx vitest run src/marketing/documents.test.js src/marketing/layout.test.js src/marketing/media.test.js src/marketing/motion.test.ts src/marketing/release-contract.test.js
+Test Files  5 passed (5)
+Tests       16 passed (16)
+
+git diff --check
+exit 0
+```
+
+### Headless Chrome visual QA
+
+The page was served locally and rendered with the permitted local Google Chrome fallback. At **320 × 844**, the audit reported `documentElement.scrollWidth: 320`, `innerWidth: 320`, and `scrollX: 0`. The 288px-wide header measured 107px tall; the brand ended at y=44.997 and the navigation began at y=54.997, confirming a distinct second row. Link rectangles were Home **44 × 44**, Documents **69.3125 × 44**, and GitHub **56.53125 × 44** CSS pixels.
+
+Sanity renders at **390 × 844** and **1440 × 900** both reported `documentElement.scrollWidth === innerWidth` and `scrollX === 0`. The 390px header retained its 68px single-row layout with all links at least 44px high; the desktop header retained its original 76px presentation. Screenshots at all three sizes were inspected for hierarchy, wrapping, clipping, spacing, and overflow. The 320px two-row header preserves the brand-first hierarchy and does not crowd the first hero label. Temporary QA screenshots and the capture script were not committed; the local server and Chrome session were terminated.
