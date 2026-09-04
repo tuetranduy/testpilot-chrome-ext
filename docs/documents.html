@@ -68,7 +68,7 @@
             <ol class="docs-steps" data-install-steps>
               <li>
                 <span class="step-number">1</span>
-                <div><strong>Download the latest stable release ZIP.</strong><p><a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip">Download TestPilot for Chrome</a>. If the download does not begin, open the <a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest">latest release page</a>.</p></div>
+                <div><strong>Download the latest stable release ZIP.</strong><p><a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip">Download TestPilot for Chrome</a>. Stable packages are published from version tags. If the ZIP is not available yet, open the <a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest">latest release page</a> to check the published assets.</p></div>
               </li>
               <li>
                 <span class="step-number">2</span>
@@ -109,7 +109,7 @@
 
             <figure class="product-figure figure-landscape" data-reveal>
               <div class="product-frame">
-                <img data-product-screenshot src="assets/testpilot-settings-providers.png" alt="TestPilot Settings with OpenAI selected, an empty API key field, a model field, Fetch available models, and Test connection controls." width="1000" height="1346" loading="lazy" decoding="async" />
+                <img data-product-screenshot src="assets/testpilot-settings-providers.png" alt="TestPilot Settings with OpenAI selected, an empty API key field, a model field, Fetch available models, and Test connection controls." width="760" height="1520" loading="lazy" decoding="async" />
               </div>
               <figcaption><strong>The real Settings screen.</strong> Credential fields are empty in this locally rendered product screenshot; paste your own key only in your installed extension.</figcaption>
             </figure>
@@ -151,7 +151,7 @@
                 <ol>
                   <li>Install and start a compatible server. For one documented option, see <a href="https://docs.ollama.com/api/openai-compatibility">Ollama’s OpenAI compatibility guide</a>.</li>
                   <li>Choose <strong>Local LLM</strong>, enter the served model name, and set <strong>Local LLM base URL</strong>. TestPilot defaults to <code>http://localhost:11434/v1</code>.</li>
-                  <li>Choose <strong>Test connection</strong>. For image scans, use a local model that accepts image input and enable that capability when TestPilot asks.</li>
+                  <li>For image scans, use a local vision model. If its capability is shown as unknown, select <strong>This model accepts image input</strong>, then choose <strong>Test connection</strong>.</li>
                 </ol>
               </section>
             </div>
@@ -171,7 +171,7 @@
 
             <ol class="docs-steps compact-steps">
               <li><span class="step-number">1</span><div><strong>Open Figma’s official token instructions.</strong><p>Follow the <a href="https://developers.figma.com/docs/rest-api/personal-access-tokens/">personal access token guide</a>: account menu → Settings → Security → Generate new token.</p></div></li>
-              <li><span class="step-number">2</span><div><strong>Limit the token.</strong><p>Choose an expiry of no more than <strong>90 days</strong>, select only the <code>file_content:read</code> scope, and limit file access to the designs you need.</p></div></li>
+              <li><span class="step-number">2</span><div><strong>Choose the API scope.</strong><p>Choose an expiry of no more than <strong>90 days</strong> and select only <code>file_content:read</code>. This scope limits which Figma API endpoints the token can use; the token inherits your existing Figma file access and does not grant or restrict access per file.</p></div></li>
               <li><span class="step-number">3</span><div><strong>Copy it once and store it safely.</strong><p>Figma shows a new token once. Do not put it in screenshots, messages, source files, or tickets.</p></div></li>
               <li><span class="step-number">4</span><div><strong>Save it in TestPilot.</strong><p>Open <strong>Settings</strong> → <strong>Figma connection</strong>, paste the token, and choose <strong>Save settings</strong>.</p></div></li>
             </ol>
