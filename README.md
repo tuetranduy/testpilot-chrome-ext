@@ -34,7 +34,7 @@ See the [latest release notes](https://github.com/tuetranduy/testpilot-chrome-ex
 
 Provider keys, the Figma token, scans, generated cases, and field values are
 stored only in `chrome.storage.local`; they are never synced. TestPilot asks for
-exact host access at runtime instead of requesting broad access upfront.
+exact host access at runtime instead of requesting broad access upfront .
 
 ## Scan a web page
 
