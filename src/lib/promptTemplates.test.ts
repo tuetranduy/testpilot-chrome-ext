@@ -56,4 +56,11 @@ describe('buildTestCasePrompt', () => {
         expect(prompt.user).toContain('1440')
         expect(prompt.user).toContain('Error.png')
     })
+
+    it('directs test cases to use displayed select labels and prioritize core page flows', () => {
+        const { user } = buildTestCasePrompt(webScan, '', 'plain', 5)
+
+        expect(user).toContain('refer to options by their displayed label')
+        expect(user).toContain('Prioritize core user journeys in main content and forms')
+    })
 })

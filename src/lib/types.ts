@@ -11,11 +11,19 @@ export interface ElementSummary {
     required: boolean
     pattern: string | null
     maxLength: number | null
-    options: string[] | null // <select> option values/labels
+    options: SelectOption[] | null // <select> option values and displayed labels
     text: string | null // visible text for non-form elements (buttons, links)
     selector: string // CSS selector used to re-locate the element for filling
     visible: boolean
+    context?: ElementContext
 }
+
+export interface SelectOption {
+    value: string
+    label: string
+}
+
+export type ElementContext = 'form' | 'main' | 'header' | 'footer' | 'navigation' | 'aside' | 'unknown'
 
 export type ScanImageRole = 'viewport' | 'full-page' | 'figma-preview' | 'upload'
 
@@ -36,6 +44,7 @@ export interface WebScanResult {
     scannedAt: number
     elements: ElementSummary[]
     images: ScanImage[]
+    fullPageCaptureError?: string | null
 }
 
 export interface FigmaNodeSummary {

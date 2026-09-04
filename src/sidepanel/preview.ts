@@ -22,7 +22,7 @@ if (!previewGlobal.chrome?.tabs?.query || !previewGlobal.chrome?.storage?.local)
         images: [],
         elements: [
           { id: 'email', tag: 'input', role: null, label: 'Email address', type: 'email', name: 'email', placeholder: 'you@example.com', required: true, pattern: null, maxLength: null, options: null, text: null, selector: '#email', visible: true },
-          { id: 'country', tag: 'select', role: null, label: 'Country', type: null, name: 'country', placeholder: null, required: true, pattern: null, maxLength: null, options: ['Vietnam', 'Singapore'], text: null, selector: '#country', visible: true },
+          { id: 'country', tag: 'select', role: null, label: 'Country', type: null, name: 'country', placeholder: null, required: true, pattern: null, maxLength: null, options: [{ value: 'Vietnam', label: 'Vietnam' }, { value: 'Singapore', label: 'Singapore' }], text: null, selector: '#country', visible: true, context: 'form' },
           { id: 'submit', tag: 'button', role: 'button', label: null, type: 'submit', name: null, placeholder: null, required: false, pattern: null, maxLength: null, options: null, text: 'Place order', selector: '#submit', visible: true },
         ],
       },

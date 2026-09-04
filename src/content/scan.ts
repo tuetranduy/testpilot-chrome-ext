@@ -60,6 +60,16 @@ export function scanPage(): ElementSummary[] {
         return tag
     }
 
+    function contextFor(el: Element): 'form' | 'main' | 'header' | 'footer' | 'navigation' | 'aside' | 'unknown' {
+        if (el.closest('form')) return 'form'
+        if (el.closest('main,[role="main"]')) return 'main'
+        if (el.closest('header,[role="banner"]')) return 'header'
+        if (el.closest('footer,[role="contentinfo"]')) return 'footer'
+        if (el.closest('nav,[role="navigation"]')) return 'navigation'
+        if (el.closest('aside,[role="complementary"]')) return 'aside'
+        return 'unknown'
+    }
+
     const nodes = Array.from(document.querySelectorAll(INTERACTIVE_SELECTOR))
     return nodes.map((el, index) => {
         const tag = el.tagName.toLowerCase()
@@ -76,11 +86,11 @@ export function scanPage(): ElementSummary[] {
             required: el.hasAttribute('required'),
             pattern: el.getAttribute('pattern'),
             maxLength: inputEl.maxLength && inputEl.maxLength > 0 ? inputEl.maxLength : null,
-            options: tag === 'select' ? Array.from((el as HTMLSelectElement).options).map((o) => o.value || o.text) : null,
+            options: tag === 'select' ? Array.from((el as HTMLSelectElement).options).map((o) => ({ value: o.value, label: o.text.trim() || o.value })) : null,
             text: isTextish ? (el.textContent || '').trim().slice(0, 120) || null : null,
             selector: selectorFor(el, index),
             visible: isVisible(el),
+            context: contextFor(el),
         }
     })
 }
-

@@ -18,6 +18,7 @@ function summarizeElements(elements: ElementSummary[]) {
                 maxLength: e.maxLength,
                 options: e.options,
                 text: e.text,
+                context: e.context ?? 'unknown',
             })),
         null,
         2,
@@ -62,7 +63,7 @@ export function buildTestCasePrompt(
         ? `\n\nDo not repeat these previously generated test-case titles or equivalent scenarios:\n${excludedTitles.map((title) => `- ${title}`).join('\n')}`
         : ''
     const user = `${sourceLabel} (JSON):\n${sourceJson}\n\nRequirements / Acceptance Criteria:\n${requirementsText.trim() || '(none provided — infer sensible test cases from the UI alone)'
-        }${exclusions}\n\nGenerate exactly ${requestedCount} unique test cases covering the happy path, validation errors, and edge cases. ${formatNote}`
+        }${exclusions}\n\nPrioritize core user journeys in main content and forms. Treat header, footer, navigation, aside, legal, social, and cookie controls as low priority; cover them only when requirements explicitly require them or the page has no core workflow. For select fields, refer to options by their displayed label, never their internal value.\n\nGenerate exactly ${requestedCount} unique test cases covering the happy path, validation errors, and edge cases. ${formatNote}`
     return { system, user }
 }
 
@@ -78,6 +79,6 @@ export function buildTestDataPrompt(
     const system = `You are a QA test-data generation assistant. Given form fields and their constraints, generate realistic, valid sample values. Respond ONLY with strict JSON matching this TypeScript type — no markdown fences, no commentary:\n\n${TEST_DATA_SCHEMA}`
     const previous = Object.keys(previousValues).length > 0 ? JSON.stringify(previousValues, null, 2) : '(none)'
     const variation = variationToken || 'fresh-generation'
-    const user = `Generation variation token: ${variation}\nPrevious generated values (avoid reusing these when valid alternatives exist):\n${previous}\n\nForm fields (JSON):\n${summarizeElements(formFields)}\n\nGenerate exactly one fresh value per field "id", respecting its type/pattern/required/maxLength/options constraints. Prefer values that differ from the previous generated values. For "select" fields, choose one of the given "options" verbatim. For checkboxes/radios use "true" or "false".`
+    const user = `Generation variation token: ${variation}\nPrevious generated values (avoid reusing these when valid alternatives exist):\n${previous}\n\nForm fields (JSON):\n${summarizeElements(formFields)}\n\nWhen page screenshots are provided, use them to understand the visual context and choose semantically appropriate values. Only generate values for the supplied field IDs; the structured field constraints take precedence.\n\nGenerate exactly one fresh value per field "id", respecting its type/pattern/required/maxLength/options constraints. Prefer values that differ from the previous generated values. For "select" fields, choose one option's "value" exactly. For checkboxes/radios use "true" or "false".`
     return { system, user }
 }

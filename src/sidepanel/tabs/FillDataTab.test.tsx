@@ -67,6 +67,47 @@ describe('FillDataTab', () => {
     expect(firstRequest[1].content).not.toBe(secondRequest[1].content)
   })
 
+  it('sends scan screenshots when generating data with a vision-capable model', async () => {
+    ensureProviderAccess.mockResolvedValue(true)
+    chatWithProvider.mockResolvedValue('[{"id":"email","value":"new@example.com"}]')
+    const recordWithScreenshot: RunRecord = {
+      ...siteRecord,
+      lastScan: {
+        ...siteRecord.lastScan!,
+        images: [{ id: 'viewport', name: 'Page viewport', mimeType: 'image/jpeg', width: 1200, height: 800, dataUrl: 'data:image/jpeg;base64,page-image', role: 'viewport' }],
+      },
+    }
+    render(<FillDataTab tab={{ id: 1, windowId: 1, url: 'https://example.com/checkout' } as chrome.tabs.Tab} settings={DEFAULT_SETTINGS} siteRecord={recordWithScreenshot} onUpdate={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /generate data/i }))
+
+    await waitFor(() => expect(chatWithProvider).toHaveBeenCalledTimes(1))
+    expect(chatWithProvider.mock.calls[0][3]).toEqual({ temperature: 0.9, images: ['data:image/jpeg;base64,page-image'] })
+    expect(chatWithProvider.mock.calls[0][2][1].content).toContain('When page screenshots are provided, use them to understand the visual context')
+  })
+
+  it('keeps generation structured-only for a text-only model', async () => {
+    ensureProviderAccess.mockResolvedValue(true)
+    chatWithProvider.mockResolvedValue('[{"id":"email","value":"new@example.com"}]')
+    const recordWithScreenshot: RunRecord = {
+      ...siteRecord,
+      lastScan: {
+        ...siteRecord.lastScan!,
+        images: [{ id: 'viewport', name: 'Page viewport', mimeType: 'image/jpeg', width: 1200, height: 800, dataUrl: 'data:image/jpeg;base64,page-image', role: 'viewport' }],
+      },
+    }
+    const textOnlySettings = {
+      ...DEFAULT_SETTINGS,
+      providers: { ...DEFAULT_SETTINGS.providers, openai: { ...DEFAULT_SETTINGS.providers.openai, model: 'gpt-3.5-turbo' } },
+    }
+    render(<FillDataTab tab={{ id: 1, windowId: 1, url: 'https://example.com/checkout' } as chrome.tabs.Tab} settings={textOnlySettings} siteRecord={recordWithScreenshot} onUpdate={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /generate data/i }))
+
+    await waitFor(() => expect(chatWithProvider).toHaveBeenCalledTimes(1))
+    expect(chatWithProvider.mock.calls[0][3]).toEqual({ temperature: 0.9 })
+  })
+
   it('shows an actionable error when filling the page fails', async () => {
     fillActiveTab.mockRejectedValueOnce(new Error('Page is no longer available'))
     const tab: chrome.tabs.Tab = {
@@ -87,42 +128,49 @@ describe('FillDataTab', () => {
     }
     render(<FillDataTab tab={tab} settings={DEFAULT_SETTINGS} siteRecord={siteRecord} onUpdate={vi.fn()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /choose fields/i }))
-    fireEvent.click(screen.getByRole('checkbox', { name: /select country/i }))
-    fireEvent.click(screen.getByRole('button', { name: /fill 1 field/i }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /select email address/i }))
+    fireEvent.click(screen.getByRole('button', { name: /fill selected \(1\)/i }))
 
     expect((await screen.findByRole('alert')).textContent).toContain('Page is no longer available')
   })
 
-  it('fills only fields selected in the bulk chooser', async () => {
+  it('fills only individually selected fields', async () => {
     fillActiveTab.mockResolvedValueOnce(1)
     const tab = { id: 1, windowId: 1, url: 'https://example.com/checkout' } as chrome.tabs.Tab
     render(<FillDataTab tab={tab} settings={DEFAULT_SETTINGS} siteRecord={siteRecord} onUpdate={vi.fn()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /choose fields/i }))
-    fireEvent.click(screen.getByRole('checkbox', { name: /select country/i }))
-    fireEvent.click(screen.getByRole('button', { name: /fill 1 field/i }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /select email address/i }))
+    fireEvent.click(screen.getByRole('button', { name: /fill selected \(1\)/i }))
 
     await waitFor(() => expect(fillActiveTab).toHaveBeenCalledWith(tab, [
       { selector: '#email', value: 'alex@example.com', type: 'email' },
     ]))
-    expect(screen.queryByRole('group', { name: /fields to fill/i })).toBeNull()
+    expect((screen.getByRole('checkbox', { name: /select email address/i }) as HTMLInputElement).checked).toBe(false)
   })
 
-  it('supports Clear, Select all, and Cancel without filling', () => {
+  it('supports Select all and Deselect all without filling', () => {
     const tab = { id: 1, windowId: 1, url: 'https://example.com/checkout' } as chrome.tabs.Tab
     render(<FillDataTab tab={tab} settings={DEFAULT_SETTINGS} siteRecord={siteRecord} onUpdate={vi.fn()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /choose fields/i }))
-    expect(screen.getAllByRole('checkbox').every((checkbox) => (checkbox as HTMLInputElement).checked)).toBe(true)
-    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
     expect(screen.getAllByRole('checkbox').every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true)
-    fireEvent.click(screen.getByRole('button', { name: /select all/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Select all' }))
     expect(screen.getAllByRole('checkbox').every((checkbox) => (checkbox as HTMLInputElement).checked)).toBe(true)
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    fireEvent.click(screen.getByRole('button', { name: /deselect all/i }))
 
-    expect(screen.queryByRole('group', { name: /fields to fill/i })).toBeNull()
+    expect(screen.getAllByRole('checkbox').every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true)
+    expect((screen.getByRole('button', { name: /fill selected \(0\)/i }) as HTMLButtonElement).disabled).toBe(true)
     expect(fillActiveTab).not.toHaveBeenCalled()
+  })
+
+  it('places selection checkboxes beside every generated field', () => {
+    const tab = { id: 1, windowId: 1, url: 'https://example.com/checkout' } as chrome.tabs.Tab
+    render(<FillDataTab tab={tab} settings={DEFAULT_SETTINGS} siteRecord={siteRecord} onUpdate={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: /choose fields/i })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: /select email address/i })).toBeTruthy()
+    expect(screen.getByRole('checkbox', { name: /select country/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Select all' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Deselect all' })).toBeTruthy()
   })
 
   it('explains that Figma scans cannot fill a live page', () => {

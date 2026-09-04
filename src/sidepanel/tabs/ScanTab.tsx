@@ -9,7 +9,7 @@ import { scanActiveTab } from '../../lib/tabActions'
 import { generateTestCaseSuite } from '../../lib/testCaseGeneration'
 import { imageRunLabel, MAX_SCAN_IMAGES, normalizeImageFiles } from '../../lib/images'
 import { getVisionCapability } from '../../lib/modelCapabilities'
-import type { ImageScanResult, RunLocator, RunRecord, ScanImage, ScanResult, Settings, TestCaseFormat, WebRunLocator } from '../../lib/types'
+import type { ImageScanResult, RunLocator, RunRecord, ScanResult, Settings, TestCaseFormat, WebRunLocator } from '../../lib/types'
 import { Badge, Button, Card, EmptyState, Icon, InlineMessage, SectionTitle, Spinner, fieldClassName } from '../components/ui'
 
 interface Props {
@@ -70,7 +70,7 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   const [loadingFigma, setLoadingFigma] = useState(false)
   const [switchingRun, setSwitchingRun] = useState(false)
   const [processingImages, setProcessingImages] = useState(false)
-  const [pendingFullPage, setPendingFullPage] = useState<ScanImage | null>(null)
+  const [includeFullPage, setIncludeFullPage] = useState(false)
   const [structuredOnlyConsent, setStructuredOnlyConsent] = useState<{
     source: RunLocator['source']
     scan: ScanResult
@@ -99,9 +99,7 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
   )
   const omitImages = canGenerateWithoutImages && generateWithoutImages
   const visionBlocked = visionIncompatible && !omitImages
-  const displayedImages = scan
-    ? pendingFullPage && scan.source === 'web' ? [...scan.images.filter((image) => image.role !== 'full-page'), pendingFullPage] : scan.images
-    : pendingFullPage ? [pendingFullPage] : []
+  const displayedImages = scan?.images ?? []
 
   function continueWithoutImages() {
     if (!scan) return
@@ -126,7 +124,7 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
     }
   }
 
-  async function handleWebScan() {
+  async function handleWebScan(includeFullPageScreenshot = includeFullPage) {
     if (switchingRun || processingImages) return
     setScanError(null)
     setScanning(true)
@@ -136,9 +134,9 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
         setGranted(grantedNow)
         if (!grantedNow) throw new Error('Permission denied for this site.')
       }
-      const result = await scanActiveTab(tab)
-      if (pendingFullPage) result.images = [...result.images.filter((image) => image.role !== 'full-page'), pendingFullPage]
+      const result = await scanActiveTab(tab, { includeFullPage: includeFullPageScreenshot })
       onUpdate({ ...siteRecord, locator: webLocator(tab), lastScan: result })
+      if (result.source === 'web' && result.fullPageCaptureError) setScanError(`Full-page screenshot was not captured: ${result.fullPageCaptureError}`)
     } catch (error) {
       setScanError(error instanceof Error ? error.message : 'Scan failed.')
     } finally {
@@ -168,29 +166,13 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
     }
   }
 
-  async function handleFullPageUpload(file: File) {
-    setScanError(null)
-    setProcessingImages(true)
-    try {
-      const [image] = await normalizeImageFiles([file], 'full-page')
-      setPendingFullPage(image)
-      if (scan?.source === 'web') onUpdate({ ...siteRecord, lastScan: { ...scan, images: [...scan.images.filter((item) => item.role !== 'full-page'), image] } })
-    } catch (error) {
-      setScanError(error instanceof Error ? error.message : 'Could not process the full-page screenshot.')
-    } finally {
-      setProcessingImages(false)
-    }
-  }
-
   function removeImage(imageId: string) {
-    if (pendingFullPage?.id === imageId) setPendingFullPage(null)
     if (!scan) return
     const images = scan.images.filter((image) => image.id !== imageId)
     if (scan.source === 'image' && siteRecord.locator.source === 'image') {
       const title = imageRunLabel(images.map((image) => image.name))
       onUpdate({ ...siteRecord, locator: { ...siteRecord.locator, label: title }, lastScan: { ...scan, title, images } })
     } else {
-      if (scan.images.find((image) => image.id === imageId)?.role === 'full-page') setPendingFullPage(null)
       onUpdate({ ...siteRecord, lastScan: { ...scan, images } })
     }
   }
@@ -327,12 +309,11 @@ export function ScanTab({ tab, granted, setGranted, settings, siteRecord, onUpda
         {source === 'web' ? (
           <>
             <p className="mt-2 text-xs leading-5 text-muted">Capture interactive elements and a visual snapshot of the current page.</p>
-            <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-border-strong bg-bg/35 px-3 py-2.5 text-xs text-muted hover:bg-surface-hover">
-              <span><span className="block font-semibold text-text">Full-page screenshot</span><span className="mt-0.5 block text-[10px]">Optional PNG, JPEG, or WebP</span></span>
-              <Icon name="upload" />
-              <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Attach full-page screenshot" className="hidden" disabled={processingImages || scanning || switchingRun} onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleFullPageUpload(file); event.target.value = '' }} />
+            <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border-strong bg-bg/35 px-3 py-2.5 text-xs text-muted hover:bg-surface-hover">
+              <span><span className="block font-semibold text-text">Full-page screenshot</span><span className="mt-0.5 block text-[10px]">Scan the entire page when enabled.</span></span>
+              <input type="checkbox" aria-label="Capture full-page screenshot" checked={includeFullPage} disabled={processingImages || scanning || switchingRun} onChange={(event) => { const checked = event.currentTarget.checked; setIncludeFullPage(checked); if (checked) void handleWebScan(true) }} className="h-4 w-4 shrink-0 cursor-pointer accent-cta disabled:cursor-not-allowed" />
             </label>
-            <Button onClick={handleWebScan} disabled={scanning || processingImages || switchingRun} className="mt-3 w-full">
+            <Button onClick={() => void handleWebScan()} disabled={scanning || processingImages || switchingRun} className="mt-3 w-full">
               {scanning ? <><Spinner /> Scanning…</> : <><Icon name="scan" /> Scan current page</>}
             </Button>
           </>

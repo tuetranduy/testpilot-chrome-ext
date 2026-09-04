@@ -29,7 +29,10 @@ describe('scanPage', () => {
         })
 
         const country = elements.find((e) => e.name === 'country')
-        expect(country?.options).toEqual(['us', 'uk'])
+        expect(country?.options).toEqual([
+            { value: 'us', label: 'United States' },
+            { value: 'uk', label: 'United Kingdom' },
+        ])
 
         const submit = elements.find((e) => e.tag === 'button')
         expect(submit?.text).toBe('Submit')
@@ -40,5 +43,19 @@ describe('scanPage', () => {
         const [element] = scanPage()
         expect(element.selector).toMatch(/data-testpilot-id/)
         expect(document.querySelector(element.selector)).not.toBeNull()
+    })
+
+    it('describes each control by its nearest page region', () => {
+        document.body.innerHTML = `
+          <header><a href="/help">Help</a></header>
+          <main><form><input id="email" type="email" /></form></main>
+          <footer><a href="/privacy">Privacy</a></footer>
+        `
+
+        const elements = scanPage()
+
+        expect(elements.find((element) => element.selector === '#email')).toMatchObject({ context: 'form' })
+        expect(elements.find((element) => element.text === 'Help')).toMatchObject({ context: 'header' })
+        expect(elements.find((element) => element.text === 'Privacy')).toMatchObject({ context: 'footer' })
     })
 })

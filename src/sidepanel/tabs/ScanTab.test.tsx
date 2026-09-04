@@ -182,40 +182,16 @@ describe('ScanTab', () => {
     ))
   })
 
-  it('adds an optional full-page image to an existing web scan', async () => {
-    mocks.normalizeImageFiles.mockResolvedValue([fullPageImage])
+  it('starts a full-page scan as soon as the option is checked', async () => {
+    mocks.scanActiveTab.mockResolvedValue({ ...webRecord.lastScan, images: [viewportImage, fullPageImage] })
     const { onUpdate } = renderTab()
 
-    fireEvent.change(screen.getByLabelText('Attach full-page screenshot'), { target: { files: [new File(['full'], 'Checkout-full.png', { type: 'image/png' })] } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Capture full-page screenshot' }))
 
     await waitFor(() => expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      lastScan: expect.objectContaining({ images: [expect.objectContaining({ role: 'full-page' })] }),
+      lastScan: expect.objectContaining({ images: [viewportImage, fullPageImage] }),
     })))
-  })
-
-  it('keeps a staged full-page image when the web page is scanned afterward', async () => {
-    mocks.normalizeImageFiles.mockResolvedValue([fullPageImage])
-    mocks.scanActiveTab.mockResolvedValue({ ...webRecord.lastScan, images: [uploadedImage] })
-    const { onUpdate } = renderTab({ ...webRecord, lastScan: null })
-
-    fireEvent.change(screen.getByLabelText('Attach full-page screenshot'), { target: { files: [new File(['full'], 'Checkout-full.png', { type: 'image/png' })] } })
-    await waitFor(() => expect(mocks.normalizeImageFiles).toHaveBeenCalled())
-    fireEvent.click(screen.getByRole('button', { name: /scan current page/i }))
-
-    await waitFor(() => expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      lastScan: expect.objectContaining({ images: [uploadedImage, fullPageImage] }),
-    })))
-  })
-
-  it('previews and removes a full-page image staged before scanning', async () => {
-    mocks.normalizeImageFiles.mockResolvedValue([fullPageImage])
-    renderTab({ ...webRecord, lastScan: null })
-
-    fireEvent.change(screen.getByLabelText('Attach full-page screenshot'), { target: { files: [new File(['full'], 'Checkout-full.png', { type: 'image/png' })] } })
-    expect(await screen.findByAltText('Checkout-full.png preview')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Checkout-full.png' }))
-
-    expect(screen.queryByAltText('Checkout-full.png preview')).toBeNull()
+    expect(mocks.scanActiveTab).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }), { includeFullPage: true })
   })
 
   it('sends every scan image to the provider in display order', async () => {
@@ -371,14 +347,14 @@ describe('ScanTab', () => {
     expect(screen.queryByRole('button', { name: /scan current page/i })).toBeNull()
   })
 
-  it('locks attachment changes while a web scan is running', async () => {
+  it('locks the full-page option while a web scan is running', async () => {
     let finishScan: ((value: typeof webRecord.lastScan) => void) | undefined
     mocks.scanActiveTab.mockReturnValue(new Promise((resolve) => { finishScan = resolve }))
     renderTab()
 
     fireEvent.click(screen.getByRole('button', { name: /scan current page/i }))
 
-    await waitFor(() => expect((screen.getByLabelText('Attach full-page screenshot') as HTMLInputElement).disabled).toBe(true))
+    await waitFor(() => expect((screen.getByRole('checkbox', { name: 'Capture full-page screenshot' }) as HTMLInputElement).disabled).toBe(true))
     finishScan?.(webRecord.lastScan)
   })
 
