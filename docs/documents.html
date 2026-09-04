@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en" data-marketing-site>
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J3J0LYEWEC"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-J3J0LYEWEC');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Set up TestPilot for Chrome with the stable release, an AI provider or local model, and optional Figma access." />
@@ -13,6 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <script type="module" src="motion.js"></script>
+    <script type="module" src="analytics.js"></script>
   </head>
   <body class="documents-page">
     <a class="skip-link" href="#main-content">Skip to setup guide</a>
@@ -68,7 +77,7 @@
             <ol class="docs-steps" data-install-steps>
               <li>
                 <span class="step-number">1</span>
-                <div><strong>Download the latest stable release ZIP.</strong><p><a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip">Download TestPilot for Chrome</a>. Stable packages are published from version tags. If the ZIP is not available yet, open the <a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest">latest release page</a> to check the published assets.</p></div>
+                <div><strong>Download the latest stable release ZIP.</strong><p><a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip" data-analytics-location="documents-install">Download TestPilot for Chrome</a>. Stable packages are published from version tags. If the ZIP is not available yet, open the <a href="https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest">latest release page</a> to check the published assets.</p></div>
               </li>
               <li>
                 <span class="step-number">2</span>

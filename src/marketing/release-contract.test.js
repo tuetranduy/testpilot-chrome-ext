@@ -1,13 +1,33 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 
 const latestDownload = 'https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest/download/testpilot-chrome-extension.zip'
 const latestRelease = 'https://github.com/tuetranduy/testpilot-chrome-ext/releases/latest'
+const measurementId = 'G-J3J0LYEWEC'
 const marketing = readFileSync('docs/index.html', 'utf8')
+const documents = readFileSync('docs/documents.html', 'utf8')
 const marketingStyles = readFileSync('docs/styles.css', 'utf8')
 const readme = readFileSync('README.md', 'utf8')
 
 describe('latest release marketing contract', () => {
+  test.each([
+    ['homepage', marketing],
+    ['documents page', documents],
+  ])('loads GA4 on the %s and identifies every release download CTA', (_pageName, markup) => {
+    const page = document.createElement('div')
+    page.innerHTML = markup
+
+    const googleTag = page.querySelector(`script[src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"]`)
+    const analyticsModule = page.querySelector('script[type="module"][src="analytics.js"]')
+    const downloadLinks = Array.from(page.querySelectorAll(`a[href="${latestDownload}"]`))
+
+    expect(googleTag?.hasAttribute('async')).toBe(true)
+    expect(analyticsModule).not.toBeNull()
+    expect(existsSync('docs/analytics.js')).toBe(true)
+    expect(downloadLinks.length).toBeGreaterThan(0)
+    expect(downloadLinks.every((link) => Boolean(link.getAttribute('data-analytics-location')))).toBe(true)
+  })
+
   test('offers the packaged release as the primary hero CTA and links to release notes', () => {
     const page = document.createElement('div')
     page.innerHTML = marketing
