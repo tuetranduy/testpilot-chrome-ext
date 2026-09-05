@@ -3,6 +3,7 @@ import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 const siteMarkup = readFileSync('docs/index.html', 'utf8')
+const siteStyles = readFileSync('docs/styles.css', 'utf8')
 const siteRoot = path.resolve('docs')
 
 describe('marketing hero media', () => {
@@ -42,5 +43,25 @@ describe('marketing hero media', () => {
     ]) {
       expect(existsSync(path.join(siteRoot, 'marketing', 'exports', asset))).toBe(true)
     }
+  })
+
+  test('contains mismatched hero media only at the mobile breakpoint', () => {
+    const style = document.createElement('style')
+    style.textContent = siteStyles
+    document.head.append(style)
+
+    const rules = Array.from(style.sheet?.cssRules ?? [])
+    const baseVideoRule = rules.find((rule) => rule.selectorText === '.hero-video')
+    const mobileRule = rules.find((rule) => (
+      rule.conditionText?.replaceAll(' ', '') === '(max-width:560px)'
+      && Array.from(rule.cssRules ?? []).some((nestedRule) => nestedRule.selectorText === '.hero-video')
+    ))
+    const mobileVideoRule = Array.from(mobileRule?.cssRules ?? [])
+      .find((rule) => rule.selectorText === '.hero-video')
+
+    expect(baseVideoRule?.style.objectFit).toBe('cover')
+    expect(mobileVideoRule?.style.objectFit).toBe('contain')
+
+    style.remove()
   })
 })
